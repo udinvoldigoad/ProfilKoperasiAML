@@ -29,10 +29,6 @@ export function QrCodeCard({ token, title }: { token: string; title: string }) {
       <div className="mt-6 flex flex-col items-center rounded-2xl border border-border-subtle bg-white p-5">
         {dataUrl ? <img src={dataUrl} alt={`QR presensi ${title}`} className="h-80 w-80 max-w-full" /> : <p>Menyiapkan QR...</p>}
       </div>
-      <div className="mt-5 rounded-2xl bg-surface-gray p-4 text-sm text-on-surface-variant">
-        <p className="font-bold text-primary">Token demo</p>
-        <p className="mt-1 break-all">{token}</p>
-      </div>
       {dataUrl ? (
         <a
           className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white hover:bg-teal-dark"
