@@ -5,25 +5,22 @@ import { ArrowLeft, Clock3, ExternalLink, Info, MapPin, Phone } from "lucide-rea
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { units } from "@/lib/data";
+import { getUnit } from "@/lib/db/units";
+import type { Unit } from "@/types";
 
-function getUnit(id: string) {
-  return units.find((unit) => unit.id === id);
-}
-
-function gmapsUrl(unit: NonNullable<ReturnType<typeof getUnit>>) {
+function gmapsUrl(unit: Unit) {
   return unit.mapsUrl ?? `https://www.google.com/maps/search/?api=1&query=${unit.latitude},${unit.longitude}`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const unit = getUnit(id);
+  const unit = await getUnit(id);
   return { title: unit ? unit.name : "Unit Koperasi" };
 }
 
 export default async function UnitDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const unit = getUnit(id);
+  const unit = await getUnit(id);
   if (!unit) notFound();
 
   return (

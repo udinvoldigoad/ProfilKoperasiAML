@@ -6,14 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { units } from "@/lib/data";
+import { listActiveUnits } from "@/lib/db/units";
 
 export const metadata: Metadata = {
   title: "Unit Koperasi",
   description: "Empat unit usaha Koperasi Agri Mulyo Lestari beserta lokasi pada peta."
 };
 
-export default function UnitPage() {
+export default async function UnitPage() {
+  const units = await listActiveUnits();
   const mapUnits = units.map((unit) => ({
     id: unit.id,
     name: unit.name,
