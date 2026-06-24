@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PublicShell } from "@/components/public/public-shell";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { boardMembers } from "@/lib/data";
+import { listBoardMembers } from "@/lib/db/board-members";
 import { cn } from "@/lib/utils";
 import type { BoardMember } from "@/types";
 
@@ -42,8 +42,8 @@ function PersonCard({ person, lead = false }: { person: BoardMember; lead?: bool
   );
 }
 
-export default function StrukturPage() {
-  const sorted = [...boardMembers].sort((a, b) => a.sortOrder - b.sortOrder);
+export default async function StrukturPage() {
+  const sorted = await listBoardMembers();
   const [lead, ...rest] = sorted;
 
   return (
