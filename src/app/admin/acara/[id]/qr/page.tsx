@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { QrCodeCard } from "@/components/admin/qr-code-card";
 import { getEvent } from "@/lib/db/events";
@@ -7,6 +7,8 @@ export default async function QrAcaraPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const event = await getEvent(id);
   if (!event) notFound();
+  // Finished events cannot generate a presensi QR.
+  if (event.status === "selesai") redirect(`/admin/acara/${event.id}`);
   return (
     <div className="mx-auto max-w-3xl">
       <AdminPageHeader title="QR Presensi Acara" description="Tampilkan QR ini di layar atau unduh sebagai gambar untuk dicetak." />

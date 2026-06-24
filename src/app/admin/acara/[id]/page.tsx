@@ -13,6 +13,7 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
   if (!event) notFound();
   const rows = await getEventAttendanceRows(event.id);
   const present = rows.filter((row) => row.attendedAt).length;
+  const canEdit = event.status !== "selesai";
 
   return (
     <div className="mx-auto max-w-container">
@@ -21,16 +22,23 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
         description="Semua anggota aktif otomatis menjadi peserta. Kehadiran dihitung dari tabel attendances."
         actions={
           <>
-            <Link className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white" href={`/admin/acara/${event.id}/qr`}>
-              Generate QR
-            </Link>
+            {canEdit ? (
+              <Link className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white" href={`/admin/acara/${event.id}/qr`}>
+                Generate QR
+              </Link>
+            ) : null}
             <Link className="min-h-11 rounded-lg border border-primary-container bg-white px-4 py-2 text-sm font-bold text-primary" href={`/admin/acara/${event.id}/presensi`}>
               Rekap Presensi
             </Link>
-            <EventActions eventId={event.id} />
+            <EventActions eventId={event.id} canEdit={canEdit} />
           </>
         }
       />
+      {!canEdit ? (
+        <p className="mb-6 rounded-lg border border-border-subtle bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+          Acara berstatus <strong>selesai</strong> — tidak dapat diedit dan QR presensi tidak bisa dibuat lagi.
+        </p>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <Card>
           <Badge tone={event.status === "aktif" ? "success" : "neutral"}>{event.status}</Badge>

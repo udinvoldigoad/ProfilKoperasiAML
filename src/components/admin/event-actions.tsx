@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export function EventActions({ eventId }: { eventId: string }) {
+export function EventActions({ eventId, canEdit = true }: { eventId: string; canEdit?: boolean }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,13 +32,15 @@ export function EventActions({ eventId }: { eventId: string }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Link
-        href={`/admin/acara/${eventId}/edit`}
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-primary-container bg-white px-4 py-2 text-sm font-bold text-primary"
-      >
-        <Pencil size={16} aria-hidden="true" />
-        Edit
-      </Link>
+      {canEdit ? (
+        <Link
+          href={`/admin/acara/${eventId}/edit`}
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-primary-container bg-white px-4 py-2 text-sm font-bold text-primary"
+        >
+          <Pencil size={16} aria-hidden="true" />
+          Edit
+        </Link>
+      ) : null}
       <button
         type="button"
         onClick={handleDelete}
