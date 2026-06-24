@@ -3,12 +3,38 @@ import { CalendarDays, FileUp, Megaphone, UserPlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { auditLogs, events, members } from "@/lib/data";
-import { formatDateID, formatDateTimeWIB } from "@/lib/utils";
+import { listMembers } from "@/lib/db/members";
+import { listEvents } from "@/lib/db/events";
+import { countAttendancesThisMonth } from "@/lib/db/attendances";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { formatDateID } from "@/lib/utils";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const [members, events, presensiBulanIni] = await Promise.all([
+    listMembers(),
+    listEvents(),
+    countAttendancesThisMonth()
+  ]);
+
   const activeMembers = members.filter((member) => member.status === "aktif").length;
   const activeEvents = events.filter((event) => event.status === "aktif").length;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingEvents = events
+    .filter((event) => event.date >= today && event.status !== "selesai" && event.status !== "dibatalkan")
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .slice(0, 3);
+
+  const recentMembers = [...members]
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, 5);
+
+  const stats: Array<[string, string | number, string]> = [
+    ["Total Anggota", members.length, "Terdaftar di koperasi"],
+    ["Anggota Aktif", activeMembers, "Berstatus aktif"],
+    ["Acara Aktif", activeEvents, "QR siap dipindai"],
+    ["Presensi Bulan Ini", presensiBulanIni, "Kehadiran tercatat bulan ini"]
+  ];
 
   return (
     <div className="mx-auto max-w-container">
@@ -30,13 +56,8 @@ export default function AdminDashboardPage() {
       />
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Total Anggota", members.length, "Data anggota demo"],
-          ["Anggota Aktif", activeMembers, "Peserta otomatis setiap acara"],
-          ["Acara Aktif", activeEvents, "QR bisa digunakan"],
-          ["Presensi Bulan Ini", "85%", "Target internal 80%"]
-        ].map(([label, value, helper]) => (
-          <Card key={String(label)}>
+        {stats.map(([label, value, helper]) => (
+          <Card key={label}>
             <p className="text-sm font-bold text-muted-text">{label}</p>
             <p className="mt-3 text-3xl font-extrabold text-primary">{value}</p>
             <p className="mt-2 text-sm text-on-surface-variant">{helper}</p>
@@ -51,7 +72,7 @@ export default function AdminDashboardPage() {
               <h2 className="text-xl font-bold text-primary">Aksi Cepat</h2>
               <p className="text-sm text-on-surface-variant">Jalur paling sering dipakai operator desa.</p>
             </div>
-            <Badge tone="secondary">Mode demo lokal</Badge>
+            {!isSupabaseConfigured() ? <Badge tone="secondary">Mode demo lokal</Badge> : null}
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {[
@@ -71,38 +92,54 @@ export default function AdminDashboardPage() {
         <Card>
           <h2 className="text-xl font-bold text-primary">Acara Terdekat</h2>
           <div className="mt-5 grid gap-4">
-            {events.slice(0, 2).map((event) => (
-              <Link key={event.id} href={`/admin/acara/${event.id}`} className="rounded-2xl border border-border-subtle bg-white p-4 hover:border-primary">
-                <Badge tone={event.status === "aktif" ? "success" : "neutral"}>{event.status}</Badge>
-                <h3 className="mt-3 font-bold text-primary">{event.title}</h3>
-                <p className="text-sm text-on-surface-variant">{formatDateID(event.date)} di {event.location}</p>
-              </Link>
-            ))}
+            {upcomingEvents.length > 0 ? (
+              upcomingEvents.map((event) => (
+                <Link key={event.id} href={`/admin/acara/${event.id}`} className="rounded-2xl border border-border-subtle bg-white p-4 hover:border-primary">
+                  <Badge tone={event.status === "aktif" ? "success" : "warning"}>{event.status}</Badge>
+                  <h3 className="mt-3 font-bold text-primary">{event.title}</h3>
+                  <p className="text-sm text-on-surface-variant">{formatDateID(event.date)} di {event.location}</p>
+                </Link>
+              ))
+            ) : (
+              <p className="rounded-2xl bg-surface-gray p-4 text-sm text-on-surface-variant">
+                Belum ada acara mendatang. <Link href="/admin/acara/tambah" className="font-bold text-primary">Buat acara</Link>.
+              </p>
+            )}
           </div>
         </Card>
       </div>
 
       <Card className="mt-6">
-        <h2 className="text-xl font-bold text-primary">Audit Log Terbaru</h2>
+        <h2 className="text-xl font-bold text-primary">Anggota Terbaru</h2>
         <div className="mt-5 overflow-x-auto table-scroll">
-          <table className="w-full min-w-[720px] text-left">
+          <table className="w-full min-w-[640px] text-left">
             <thead className="bg-surface-gray text-sm text-on-surface-variant">
               <tr>
-                <th className="px-4 py-3">Admin</th>
-                <th className="px-4 py-3">Aktivitas</th>
-                <th className="px-4 py-3">Entitas</th>
-                <th className="px-4 py-3">Waktu</th>
+                <th className="px-4 py-3">No Anggota</th>
+                <th className="px-4 py-3">Nama</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Bergabung</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {auditLogs.map((log) => (
-                <tr key={log.id}>
-                  <td className="px-4 py-4 font-bold text-primary">{log.actor}</td>
-                  <td className="px-4 py-4">{log.summary}</td>
-                  <td className="px-4 py-4">{log.entityType}</td>
-                  <td className="px-4 py-4 text-sm text-muted-text">{formatDateTimeWIB(log.createdAt)}</td>
+              {recentMembers.length > 0 ? (
+                recentMembers.map((member) => (
+                  <tr key={member.id}>
+                    <td className="px-4 py-4 font-bold text-primary">{member.memberNumber}</td>
+                    <td className="px-4 py-4">{member.fullName}</td>
+                    <td className="px-4 py-4">
+                      <Badge tone={member.status === "aktif" ? "success" : "neutral"}>{member.status}</Badge>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-muted-text">{formatDateID(member.createdAt)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-on-surface-variant">
+                    Belum ada anggota terdaftar.
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

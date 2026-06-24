@@ -59,3 +59,24 @@ export async function listMemberAttendances(memberId: string): Promise<MemberAtt
     eventDate: row.events?.date ?? null
   }));
 }
+
+/** Number of attendance records logged in the current calendar month. */
+export async function countAttendancesThisMonth(): Promise<number> {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  if (!isSupabaseConfigured()) {
+    return demoAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;
+  }
+
+  const admin = createSupabaseAdminClient();
+  if (!admin) return 0;
+
+  const { count, error } = await admin
+    .from("attendances")
+    .select("id", { count: "exact", head: true })
+    .gte("attended_at", startOfMonth);
+
+  if (error) return 0;
+  return count ?? 0;
+}
