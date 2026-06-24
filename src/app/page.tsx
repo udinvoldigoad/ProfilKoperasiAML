@@ -1,56 +1,71 @@
-import { CalendarDays, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { hardcodedGallery, products, siteProfile, stats } from "@/lib/data";
+import { hardcodedGallery, products, siteProfile } from "@/lib/data";
 
 export default function HomePage() {
   return (
     <PublicShell>
       {/* HERO */}
-      <section className="relative min-h-[640px] overflow-hidden bg-primary text-white">
+      <section className="relative isolate min-h-[660px] overflow-hidden bg-primary text-white">
         <img
           src={siteProfile.heroImage}
           alt="Lanskap pertanian Desa Giri Mulyo"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="hero-overlay absolute inset-0" />
-        <div className="container-page relative z-10 flex min-h-[640px] items-center py-16">
-          <div className="max-w-3xl -translate-y-8 md:-translate-y-10">
-            <p className="mb-4 text-base font-bold text-[#93cfe6]">{siteProfile.village}, Lampung Timur</p>
-            <h1 className="text-4xl font-extrabold leading-tight md:text-6xl">
-              Koperasi {siteProfile.shortName} untuk Ekonomi Desa yang Maju Bersama
+        {/* Palette-based brand tint over the photo. */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/80 to-teal-dark/60" />
+        {/* Decorative glows in palette colors. */}
+        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-secondary-container/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-1/3 h-72 w-72 rounded-full bg-[#93cfe6]/20 blur-3xl" />
+
+        <div className="container-page relative z-10 flex min-h-[660px] flex-col justify-center py-20">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-bold backdrop-blur">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#93cfe6] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#93cfe6]" />
+              </span>
+              Koperasi Desa {siteProfile.village} · Lampung Timur
+            </span>
+
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] md:text-6xl">
+              Ekonomi Pertanian Desa yang <span className="text-secondary-container">Tumbuh</span> dan{" "}
+              <span className="text-[#93cfe6]">Maju Bersama</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-lg text-white/90">
-              Wadah gotong royong warga Desa Giri Mulyo: layanan pertanian, distribusi hasil panen, dan pelayanan
-              anggota yang tertib dan terbuka.
+
+            <p className="mt-6 max-w-2xl text-lg text-white/85">
+              Koperasi {siteProfile.name} menyatukan warga Desa Giri Mulyo lewat layanan pertanian, distribusi hasil
+              panen, dan pengelolaan anggota yang tertib serta terbuka.
             </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href="#produk" className="rounded-full">
+              <Link
+                href="#produk"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-primary shadow-soft transition hover:bg-white/90"
+              >
                 Lihat Produk &amp; Layanan
-              </ButtonLink>
-              <ButtonLink href="/pengumuman" variant="secondary" className="rounded-full border-white/70 bg-white/10 text-white hover:bg-white/20">
+                <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <Link
+                href="/unit"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-secondary-container px-6 text-sm font-bold text-white shadow-soft transition hover:brightness-105"
+              >
+                <MapPin size={18} aria-hidden="true" />
+                Unit Koperasi
+              </Link>
+              <Link
+                href="/pengumuman"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+              >
                 Pengumuman
-              </ButtonLink>
-              <ButtonLink href="/login" variant="secondary" className="rounded-full border-white/70 bg-white text-primary">
-                Login Anggota
-              </ButtonLink>
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* STATS */}
-      <section className="container-page relative z-20 -mt-32 md:-mt-40">
-        <div className="grid overflow-hidden rounded-3xl border border-white/45 bg-white/45 shadow-soft backdrop-blur-2xl md:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="border-b border-border-subtle p-6 text-center last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
-              <p className="text-3xl font-extrabold text-primary">{stat.value}</p>
-              <p className="mt-2 text-sm font-bold text-on-surface-variant">{stat.label}</p>
-            </div>
-          ))}
         </div>
       </section>
 
