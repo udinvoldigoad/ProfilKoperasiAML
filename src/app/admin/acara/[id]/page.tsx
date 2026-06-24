@@ -30,7 +30,7 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
             <Link className="min-h-11 rounded-lg border border-primary-container bg-white px-4 py-2 text-sm font-bold text-primary" href={`/admin/acara/${event.id}/presensi`}>
               Rekap Presensi
             </Link>
-            <EventActions eventId={event.id} canEdit={canEdit} />
+            {canEdit ? <EventActions eventId={event.id} /> : null}
           </>
         }
       />
