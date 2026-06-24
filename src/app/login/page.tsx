@@ -1,20 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Leaf, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
+import { Leaf, ShieldCheck, UserRound } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
-import { siteProfile } from "@/lib/data";
+import { RegisterCta } from "@/components/auth/register-cta";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export const metadata: Metadata = {
   title: "Login",
   description: "Login admin dan anggota Koperasi Agri Mulyo Lestari. Anggota masuk memakai NIK."
 };
-
-const waLink = `https://wa.me/${siteProfile.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-  "Halo Admin Koperasi Agri Mulyo Lestari, saya ingin mendaftar sebagai anggota koperasi."
-)}`;
 
 export default async function LoginPage({
   searchParams
@@ -64,27 +60,8 @@ export default async function LoginPage({
             )}
           </Card>
 
-          {/* No-account path: direct the user to register through the admin via WhatsApp. */}
-          <div className="mt-6">
-            <div className="flex items-center gap-3">
-              <span className="h-px flex-1 bg-border-subtle" />
-              <span className="text-xs font-bold uppercase tracking-wide text-muted-text">Belum punya akun?</span>
-              <span className="h-px flex-1 bg-border-subtle" />
-            </div>
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-sm transition hover:brightness-105"
-            >
-              <MessageCircle size={18} aria-hidden="true" />
-              Daftar lewat Admin via WhatsApp
-            </a>
-            <p className="mt-3 text-center text-sm text-muted-text">
-              Akun anggota dibuat oleh admin koperasi untuk menjaga validitas data. Hubungi admin untuk pendaftaran dan
-              aktivasi NIK Anda.
-            </p>
-          </div>
+          {/* In demo mode there are no login tabs, so show the register CTA at page level. */}
+          {!configured ? <RegisterCta /> : null}
         </div>
       </section>
     </PublicShell>

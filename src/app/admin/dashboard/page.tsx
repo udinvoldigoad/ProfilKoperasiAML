@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, FileUp, Newspaper, UserPlus } from "lucide-react";
+import { CalendarDays, FileUp, Megaphone, UserPlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
             {[
               ["/admin/anggota/import", "Import Excel Anggota", FileUp],
               ["/admin/laporan", "Export Laporan", FileUp],
-              ["/admin/berita", "Kelola Berita", Newspaper],
+              ["/admin/pengumuman", "Kelola Pengumuman", Megaphone],
               ["/admin/acara", "Kelola Acara", CalendarDays]
             ].map(([href, label, Icon]) => (
               <Link key={String(href)} href={String(href)} className="flex min-h-16 items-center gap-3 rounded-2xl border border-border-subtle bg-surface-gray px-4 font-bold text-primary hover:bg-surface-container-low">

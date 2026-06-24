@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   CalendarDays,
   FileSpreadsheet,
   History,
+  Images,
   LayoutDashboard,
   Leaf,
   LogOut,
+  MapPin,
+  Megaphone,
   Menu,
-  Newspaper,
+  Network,
   Settings,
-  ShieldCheck,
   Users,
   X
 } from "lucide-react";
@@ -24,8 +25,10 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/anggota", label: "Anggota", icon: Users },
   { href: "/admin/acara", label: "Acara", icon: CalendarDays },
-  { href: "/admin/berita", label: "Berita", icon: Newspaper },
-  { href: "/admin/struktur-pengurus", label: "Pengurus", icon: ShieldCheck },
+  { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
+  { href: "/admin/galeri", label: "Galeri", icon: Images },
+  { href: "/admin/struktur", label: "Struktur", icon: Network },
+  { href: "/admin/unit", label: "Unit", icon: MapPin },
   { href: "/admin/laporan", label: "Laporan", icon: FileSpreadsheet },
   { href: "/admin/audit-log", label: "Audit Log", icon: History },
   { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings }

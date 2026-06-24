@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { LogIn, ShieldCheck, UserRound } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { RegisterCta } from "@/components/auth/register-cta";
 
 type Mode = "anggota" | "admin";
 
@@ -47,6 +48,7 @@ export function LoginForm({ next }: { next?: string }) {
   }
 
   return (
+    <>
     <form className="grid gap-5" onSubmit={handleSubmit}>
       <div className="grid grid-cols-2 gap-2 rounded-lg bg-surface-gray p-1">
         <button
@@ -140,5 +142,7 @@ export function LoginForm({ next }: { next?: string }) {
         {loading ? "Memproses..." : mode === "anggota" ? "Login Anggota" : "Login Admin"}
       </button>
     </form>
+    {mode === "anggota" ? <RegisterCta /> : null}
+    </>
   );
 }

@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { units } from "@/lib/data";
 
-export default function AdminMapsUnitPage() {
+export default function AdminUnitPage() {
   return (
     <div className="mx-auto max-w-container">
-      <AdminPageHeader title="Manajemen Maps Unit" description="Kelola nama unit, tipe, alamat, koordinat, kontak, dan status aktif." />
+      <AdminPageHeader title="Manajemen Unit" description="Kelola nama unit, tipe, alamat, koordinat, kontak, dan status aktif." />
       <div className="grid gap-5">
         {units.map((unit) => (
           <Card key={unit.id} className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">

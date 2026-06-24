@@ -6,7 +6,7 @@ import { boardMembers } from "@/lib/data";
 export default function AdminStrukturPage() {
   return (
     <div className="mx-auto max-w-container">
-      <AdminPageHeader title="Manajemen Struktur Pengurus" description="Foto pengurus termasuk gambar yang boleh diupload dari admin." />
+      <AdminPageHeader title="Manajemen Struktur Keanggotaan" description="Kelola jajaran pengurus koperasi: nama, jabatan, periode, dan urutan." />
       <div className="grid gap-6 md:grid-cols-3">
         {boardMembers.map((person) => (
           <Card key={person.id} className="overflow-hidden p-0">

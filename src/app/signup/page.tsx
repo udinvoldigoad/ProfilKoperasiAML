@@ -22,9 +22,6 @@ export default function SignupPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <ButtonLink href={waLink}>Hubungi Admin WhatsApp</ButtonLink>
-            <ButtonLink href="/kontak" variant="secondary">
-              Lihat Kontak
-            </ButtonLink>
           </div>
         </Card>
       </section>
