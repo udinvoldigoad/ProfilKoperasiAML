@@ -123,6 +123,8 @@ create table units (
   longitude numeric not null,
   contact text,
   description text,
+  photo_url text,
+  maps_url text,
   status text not null default 'aktif',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
