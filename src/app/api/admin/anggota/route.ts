@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { isValidNik } from "@/lib/auth-identifiers";
 import { createMember } from "@/lib/db/members";
+import { clientIp, logAudit } from "@/lib/db/audit-logs";
 
 const schema = z.object({
   memberNumber: z.string().trim().min(1, "No Anggota wajib diisi."),
@@ -48,6 +49,15 @@ export async function POST(request: NextRequest) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+
+  await logAudit({
+    actorProfileId: session.profileId,
+    action: "create",
+    entityType: "members",
+    entityId: result.id,
+    summary: `Menambah anggota ${parsed.data.fullName}`,
+    ipAddress: clientIp(request)
+  });
 
   return NextResponse.json({ ok: true, id: result.id });
 }

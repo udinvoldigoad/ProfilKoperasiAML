@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { softDeleteEvent, updateEvent } from "@/lib/db/events";
+import { clientIp, logAudit } from "@/lib/db/audit-logs";
 import { eventSchema } from "../route";
 
 async function requireAdmin() {
@@ -35,16 +36,34 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const result = await updateEvent(id, { ...rest, description: description || undefined });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
 
+  await logAudit({
+    actorProfileId: guard.session.profileId,
+    action: "update",
+    entityType: "events",
+    entityId: id,
+    summary: `Memperbarui acara ${parsed.data.title}`,
+    ipAddress: clientIp(request)
+  });
+
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
   const { id } = await params;
 
   const result = await softDeleteEvent(id);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  await logAudit({
+    actorProfileId: guard.session.profileId,
+    action: "delete",
+    entityType: "events",
+    entityId: id,
+    summary: "Menghapus acara",
+    ipAddress: clientIp(request)
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { createEvent } from "@/lib/db/events";
+import { clientIp, logAudit } from "@/lib/db/audit-logs";
 
 export const eventSchema = z.object({
   title: z.string().trim().min(1, "Judul acara wajib diisi."),
@@ -43,6 +44,15 @@ export async function POST(request: NextRequest) {
   const { description, ...rest } = parsed.data;
   const result = await createEvent({ ...rest, description: description || undefined }, guard.session.profileId);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  await logAudit({
+    actorProfileId: guard.session.profileId,
+    action: "create",
+    entityType: "events",
+    entityId: result.id,
+    summary: `Membuat acara ${parsed.data.title}`,
+    ipAddress: clientIp(request)
+  });
 
   return NextResponse.json({ ok: true, id: result.id });
 }

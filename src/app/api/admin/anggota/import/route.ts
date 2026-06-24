@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import { getSessionUser } from "@/lib/auth";
 import { isValidNik, normalizeNik } from "@/lib/auth-identifiers";
 import { createMember, type CreateMemberInput } from "@/lib/db/members";
+import { clientIp, logAudit } from "@/lib/db/audit-logs";
 
 export const runtime = "nodejs";
 
@@ -172,6 +173,14 @@ export async function POST(request: NextRequest) {
       errors.push(`Baris ${row.row} (${row.nik}): ${result.error}`);
     }
   }
+
+  await logAudit({
+    actorProfileId: session.profileId,
+    action: "import",
+    entityType: "members",
+    summary: `Import anggota: ${created} dibuat, ${skipped} dilewati`,
+    ipAddress: clientIp(request)
+  });
 
   return NextResponse.json({ ok: true, created, skipped, errors });
 }

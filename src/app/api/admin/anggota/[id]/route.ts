@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { softDeleteMember, updateMember } from "@/lib/db/members";
+import { clientIp, logAudit } from "@/lib/db/audit-logs";
 
 const updateSchema = z.object({
   fullName: z.string().trim().min(1, "Nama wajib diisi."),
@@ -46,16 +47,34 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const result = await updateMember(id, { ...rest, email: email || undefined, phone: phone || undefined });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
 
+  await logAudit({
+    actorProfileId: guard.session.profileId,
+    action: "update",
+    entityType: "members",
+    entityId: id,
+    summary: `Memperbarui anggota ${parsed.data.fullName}`,
+    ipAddress: clientIp(request)
+  });
+
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireAdmin();
   if (guard.error) return guard.error;
   const { id } = await params;
 
   const result = await softDeleteMember(id);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  await logAudit({
+    actorProfileId: guard.session.profileId,
+    action: "delete",
+    entityType: "members",
+    entityId: id,
+    summary: "Menonaktifkan anggota",
+    ipAddress: clientIp(request)
+  });
 
   return NextResponse.json({ ok: true });
 }
