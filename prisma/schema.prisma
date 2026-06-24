@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  anggota
+}
+
+enum MemberStatus {
+  aktif
+  nonaktif
+  ditangguhkan
+}
+
+enum MemberType {
+  anggota_lama
+  anggota_baru
+}
+
+enum EventStatus {
+  draft
+  aktif
+  selesai
+  dibatalkan
+}
+
+enum PublishStatus {
+  draft
+  publish
+}
+
+enum AttendanceMethod {
+  qr_code
+  manual
+}
+
+model Profile {
+  id         String   @id @default(uuid()) @db.Uuid
+  authUserId String?  @unique @map("auth_user_id") @db.Uuid
+  role       Role
+  email      String?
+  phone      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  member     Member?
+  posts      Post[]   @relation("PostAuthor")
+  auditLogs  AuditLog[]
+
+  @@map("profiles")
+}
+
+model Member {
+  id           String       @id @default(uuid()) @db.Uuid
+  profileId    String?      @unique @map("profile_id") @db.Uuid
+  memberNumber String       @unique @map("member_number")
+  fullName     String       @map("full_name")
+  nik          String       @unique
+  birthPlace   String       @map("birth_place")
+  birthDate    DateTime     @map("birth_date") @db.Date
+  address      String
+  photoUrl     String?      @map("photo_url")
+  email        String?
+  phone        String?
+  status       MemberStatus @default(aktif)
+  memberType   MemberType   @default(anggota_lama) @map("member_type")
+  deletedAt    DateTime?    @map("deleted_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  profile      Profile?     @relation(fields: [profileId], references: [id])
+  attendances  Attendance[]
+
+  @@index([status, memberType])
+  @@index([deletedAt])
+  @@map("members")
+}
+
+model Event {
+  id          String      @id @default(uuid()) @db.Uuid
+  title       String
+  date        DateTime    @db.Date
+  startTime   String      @map("start_time")
+  endTime     String      @map("end_time")
+  location    String
+  description String
+  status      EventStatus @default(draft)
+  qrToken     String?     @unique @map("qr_token")
+  qrExpiresAt DateTime?   @map("qr_expires_at")
+  createdBy   String?     @map("created_by") @db.Uuid
+  deletedAt   DateTime?   @map("deleted_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  attendances Attendance[]
+
+  @@index([status, date])
+  @@index([deletedAt])
+  @@map("events")
+}
+
+model Attendance {
+  id         String           @id @default(uuid()) @db.Uuid
+  eventId    String           @map("event_id") @db.Uuid
+  memberId   String           @map("member_id") @db.Uuid
+  attendedAt DateTime         @default(now()) @map("attended_at")
+  method     AttendanceMethod @default(qr_code)
+  userAgent  String?          @map("user_agent")
+  ipAddress  String?          @map("ip_address")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  event      Event            @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  member     Member           @relation(fields: [memberId], references: [id], onDelete: Restrict)
+
+  @@unique([eventId, memberId])
+  @@index([memberId])
+  @@map("attendances")
+}
+
+model BoardMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  position  String
+  photoUrl  String?  @map("photo_url")
+  contact   String?
+  period    String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("board_members")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String
+  imageUrl    String?  @map("image_url")
+  category    String
+  status      String   @default("aktif")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+model Post {
+  id           String        @id @default(uuid()) @db.Uuid
+  title        String
+  slug         String        @unique
+  thumbnailUrl String?       @map("thumbnail_url")
+  content      String
+  authorId     String?       @map("author_id") @db.Uuid
+  status       PublishStatus @default(draft)
+  publishedAt  DateTime?     @map("published_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  author       Profile?      @relation("PostAuthor", fields: [authorId], references: [id])
+
+  @@index([status, publishedAt])
+  @@map("posts")
+}
+
+model Gallery {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  imageUrl    String   @map("image_url")
+  description String?
+  eventDate   DateTime? @map("event_date") @db.Date
+  category    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("gallery")
+}
+
+model Unit {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  type        String
+  address     String
+  latitude    Decimal
+  longitude   Decimal
+  contact     String?
+  description String?
+  status      String   @default("aktif")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("units")
+}
+
+model Setting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  actorProfileId String?  @map("actor_profile_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id") @db.Uuid
+  summary        String
+  metadata       Json?
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  actor          Profile? @relation(fields: [actorProfileId], references: [id])
+
+  @@index([action, entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
