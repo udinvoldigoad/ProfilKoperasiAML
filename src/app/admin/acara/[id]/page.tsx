@@ -1,23 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/page-header";
+import { EventActions } from "@/components/admin/event-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { attendanceRowsForEvent, getEventById } from "@/lib/data";
+import { getEvent, getEventAttendanceRows } from "@/lib/db/events";
 import { formatDateID, formatDateTimeWIB } from "@/lib/utils";
 
 export default async function DetailAcaraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = getEventById(id);
+  const event = await getEvent(id);
   if (!event) notFound();
-  const rows = attendanceRowsForEvent(event.id);
-  const present = rows.filter((row) => row.attendance).length;
+  const rows = await getEventAttendanceRows(event.id);
+  const present = rows.filter((row) => row.attendedAt).length;
 
   return (
     <div className="mx-auto max-w-container">
       <AdminPageHeader
         title={event.title}
-        description="Semua anggota aktif otomatis menjadi peserta. Hadir atau tidak hadir dihitung dari tabel attendances."
+        description="Semua anggota aktif otomatis menjadi peserta. Kehadiran dihitung dari tabel attendances."
         actions={
           <>
             <Link className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white" href={`/admin/acara/${event.id}/qr`}>
@@ -26,6 +27,7 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
             <Link className="min-h-11 rounded-lg border border-primary-container bg-white px-4 py-2 text-sm font-bold text-primary" href={`/admin/acara/${event.id}/presensi`}>
               Rekap Presensi
             </Link>
+            <EventActions eventId={event.id} />
           </>
         }
       />
@@ -67,7 +69,7 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
               <p className="text-3xl font-extrabold text-amber-900">{rows.length - present}</p>
             </div>
           </div>
-          <p className="mt-5 text-on-surface-variant">{event.description}</p>
+          {event.description ? <p className="mt-5 text-on-surface-variant">{event.description}</p> : null}
         </Card>
       </div>
     </div>

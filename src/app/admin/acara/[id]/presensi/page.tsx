@@ -3,21 +3,21 @@ import { ExportButton } from "@/components/admin/export-button";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { attendanceRowsForEvent, getEventById } from "@/lib/data";
+import { getEvent, getEventAttendanceRows } from "@/lib/db/events";
 import { formatDateTimeWIB } from "@/lib/utils";
 
 export default async function PresensiAcaraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = getEventById(id);
+  const event = await getEvent(id);
   if (!event) notFound();
-  const rows = attendanceRowsForEvent(event.id);
+  const rows = await getEventAttendanceRows(event.id);
   const exportRows = rows.map((row) => ({
     acara: event.title,
-    no_anggota: row.member.memberNumber,
-    nama: row.member.fullName,
-    nik: row.member.nik,
-    status: row.status,
-    waktu_hadir: row.attendance ? formatDateTimeWIB(row.attendance.attendedAt) : ""
+    no_anggota: row.memberNumber,
+    nama: row.fullName,
+    nik: row.nik,
+    status: row.attendedAt ? "Hadir" : "Tidak Hadir",
+    waktu_hadir: row.attendedAt ? formatDateTimeWIB(row.attendedAt) : ""
   }));
 
   return (
@@ -40,17 +40,25 @@ export default async function PresensiAcaraPage({ params }: { params: Promise<{ 
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {rows.map((row) => (
-                <tr key={row.member.id}>
-                  <td className="px-5 py-4 font-bold text-primary">{row.member.memberNumber}</td>
-                  <td className="px-5 py-4 font-bold">{row.member.fullName}</td>
-                  <td className="px-5 py-4">{row.member.nik}</td>
-                  <td className="px-5 py-4">
-                    <Badge tone={row.attendance ? "success" : "warning"}>{row.status}</Badge>
+              {rows.length > 0 ? (
+                rows.map((row) => (
+                  <tr key={row.memberId}>
+                    <td className="px-5 py-4 font-bold text-primary">{row.memberNumber}</td>
+                    <td className="px-5 py-4 font-bold">{row.fullName}</td>
+                    <td className="px-5 py-4">{row.nik}</td>
+                    <td className="px-5 py-4">
+                      <Badge tone={row.attendedAt ? "success" : "warning"}>{row.attendedAt ? "Hadir" : "Tidak Hadir"}</Badge>
+                    </td>
+                    <td className="px-5 py-4 text-muted-text">{row.attendedAt ? formatDateTimeWIB(row.attendedAt) : "-"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 text-center text-on-surface-variant">
+                    Belum ada anggota aktif untuk acara ini.
                   </td>
-                  <td className="px-5 py-4 text-muted-text">{row.attendance ? formatDateTimeWIB(row.attendance.attendedAt) : "-"}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
