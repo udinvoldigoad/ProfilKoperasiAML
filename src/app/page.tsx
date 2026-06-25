@@ -83,7 +83,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="Tentang Kami"
               title="Gotong royong ekonomi warga yang dikelola lebih tertib"
-              description="Koperasi Agri Mulyo Lestari berada di Desa Giri Mulyo, Kecamatan Marga Sekampung, Kabupaten Lampung Timur. Kami melayani kebutuhan pertanian anggota, menampung hasil panen, dan mengelola data anggota secara terbuka."
+              description="Koperasi Agro Mulyo Lestari berada di Desa Giri Mulyo, Kecamatan Marga Sekampung, Kabupaten Lampung Timur. Kami melayani kebutuhan pertanian anggota, menampung hasil panen, dan mengelola data anggota secara terbuka."
             />
             <div className="mt-6 grid grid-cols-2 gap-3">
               {[

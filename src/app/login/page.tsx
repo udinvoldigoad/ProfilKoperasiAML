@@ -9,7 +9,7 @@ import { getSiteProfile } from "@/lib/db/settings";
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Login admin dan anggota Koperasi Agri Mulyo Lestari. Anggota masuk memakai NIK."
+  description: "Login admin dan anggota Koperasi Agro Mulyo Lestari. Anggota masuk memakai NIK."
 };
 
 export default async function LoginPage({

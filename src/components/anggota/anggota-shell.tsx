@@ -100,7 +100,7 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
                 {open ? <X size={21} aria-hidden="true" /> : <Menu size={21} aria-hidden="true" />}
               </button>
               <div>
-                <p className="text-sm font-bold text-primary">Agri Mulyo Lestari</p>
+                <p className="text-sm font-bold text-primary">Agro Mulyo Lestari</p>
                 <p className="text-xs text-muted-text">Portal Anggota</p>
               </div>
             </div>

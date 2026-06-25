@@ -9,7 +9,7 @@ import { unitGroups } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Unit Koperasi",
-  description: "Unit usaha Koperasi Agri Mulyo Lestari beserta titik lokasinya pada peta."
+  description: "Unit usaha Koperasi Agro Mulyo Lestari beserta titik lokasinya pada peta."
 };
 
 const CATEGORY_COLOR: Record<string, string> = {

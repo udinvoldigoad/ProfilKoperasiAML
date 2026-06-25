@@ -21,7 +21,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
   const [showLockModal, setShowLockModal] = useState(false);
 
   const waLink = `https://wa.me/${(whatsapp ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(
-    "Halo Admin Koperasi Agri Mulyo Lestari, saya tidak bisa masuk dan ingin meminta reset password akun saya."
+    "Halo Admin Koperasi Agro Mulyo Lestari, saya tidak bisa masuk dan ingin meminta reset password akun saya."
   )}`;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

@@ -13,7 +13,7 @@ import type {
 import { eventEndToUtc } from "@/lib/utils";
 
 export const siteProfile = {
-  name: "Koperasi Agri Mulyo Lestari",
+  name: "Koperasi Agro Mulyo Lestari",
   shortName: "Koperasi AML",
   village: "Desa Giri Mulyo",
   district: "Kecamatan Marga Sekampung",
@@ -216,7 +216,7 @@ export const posts: Post[] = [
     slug: "rat-2026-fokus-transparansi-digitalisasi",
     excerpt: "Koperasi menyiapkan sistem data anggota dan presensi QR untuk pelayanan yang lebih tertib.",
     content:
-      "Rapat Anggota Tahunan 2026 menjadi momentum penting bagi Koperasi Agri Mulyo Lestari untuk memperkuat tata kelola. Pengurus memprioritaskan data anggota yang rapi, rekap kegiatan yang mudah diaudit, dan pelayanan yang lebih transparan bagi masyarakat desa.",
+      "Rapat Anggota Tahunan 2026 menjadi momentum penting bagi Koperasi Agro Mulyo Lestari untuk memperkuat tata kelola. Pengurus memprioritaskan data anggota yang rapi, rekap kegiatan yang mudah diaudit, dan pelayanan yang lebih transparan bagi masyarakat desa.",
     thumbnailUrl: "/images/rapat-koperasi.png",
     category: "Kegiatan",
     author: "Admin Koperasi",

@@ -60,7 +60,7 @@ export async function Footer() {
         </div>
       </div>
       <div className="border-t border-[#bfc8cc] py-5 text-center text-sm text-on-surface-variant">
-        Koperasi Agri Mulyo Lestari, Desa Giri Mulyo.
+        Koperasi Agro Mulyo Lestari, Desa Giri Mulyo.
       </div>
     </footer>
   );

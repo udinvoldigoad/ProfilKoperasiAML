@@ -9,7 +9,7 @@ import { formatDateID } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Pengumuman",
-  description: "Pengumuman resmi Koperasi Agri Mulyo Lestari."
+  description: "Pengumuman resmi Koperasi Agro Mulyo Lestari."
 };
 
 // Reads announcements from the DB, so it must reflect admin edits at request time.

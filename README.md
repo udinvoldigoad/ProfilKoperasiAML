@@ -1,6 +1,6 @@
-﻿# Koperasi Agri Mulyo Lestari
+﻿# Koperasi Agro Mulyo Lestari
 
-Website profil dan sistem manajemen anggota untuk Koperasi Agri Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.
+Website profil dan sistem manajemen anggota untuk Koperasi Agro Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.
 
 ## Stack
 

@@ -6,17 +6,17 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Koperasi Agri Mulyo Lestari",
-    template: "%s | Koperasi Agri Mulyo Lestari"
+    default: "Koperasi Agro Mulyo Lestari",
+    template: "%s | Koperasi Agro Mulyo Lestari"
   },
   description:
-    "Website profil dan sistem manajemen anggota Koperasi Agri Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.",
+    "Website profil dan sistem manajemen anggota Koperasi Agro Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.",
   openGraph: {
-    title: "Koperasi Agri Mulyo Lestari",
+    title: "Koperasi Agro Mulyo Lestari",
     description:
       "Portal koperasi desa untuk profil publik, manajemen anggota, acara, dan presensi QR.",
     url: siteUrl,
-    siteName: "Koperasi Agri Mulyo Lestari",
+    siteName: "Koperasi Agro Mulyo Lestari",
     images: ["/images/hero-desa-giri-mulyo.png"],
     locale: "id_ID",
     type: "website"

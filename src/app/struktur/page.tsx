@@ -8,7 +8,7 @@ import type { BoardMember } from "@/types";
 
 export const metadata: Metadata = {
   title: "Struktur Keanggotaan",
-  description: "Bagan silsilah kepengurusan Koperasi Agri Mulyo Lestari."
+  description: "Bagan silsilah kepengurusan Koperasi Agro Mulyo Lestari."
 };
 
 function initials(name: string) {
@@ -116,7 +116,7 @@ export default function StrukturPage() {
         <SectionHeading
           eyebrow="Struktur Keanggotaan"
           title="Silsilah kepengurusan koperasi"
-          description="Bagan pengurus Koperasi Agri Mulyo Lestari, dari ketua hingga jajaran pengurus lainnya."
+          description="Bagan pengurus Koperasi Agro Mulyo Lestari, dari ketua hingga jajaran pengurus lainnya."
           align="center"
         />
 

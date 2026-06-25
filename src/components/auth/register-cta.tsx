@@ -3,7 +3,7 @@ import { siteProfile } from "@/lib/data";
 
 export function RegisterCta({ whatsapp = siteProfile.whatsapp }: { whatsapp?: string }) {
   const waLink = `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-    "Halo Admin Koperasi Agri Mulyo Lestari, saya ingin mendaftar sebagai anggota koperasi."
+    "Halo Admin Koperasi Agro Mulyo Lestari, saya ingin mendaftar sebagai anggota koperasi."
   )}`;
   return (
     <div className="mt-6">

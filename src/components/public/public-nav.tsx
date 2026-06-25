@@ -71,7 +71,7 @@ export function PublicNav() {
             <Leaf size={22} aria-hidden="true" />
           </span>
           <span className="max-w-[190px] text-base font-extrabold leading-tight sm:max-w-none sm:text-xl">
-            Agri Mulyo Lestari
+            Agro Mulyo Lestari
           </span>
         </Link>
 
