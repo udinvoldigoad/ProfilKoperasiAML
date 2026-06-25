@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   },
   description:
     "Website profil dan sistem manajemen anggota Koperasi Agro Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.",
+  icons: {
+    icon: "/images/logo-koperasi.png",
+    shortcut: "/images/logo-koperasi.png",
+    apple: "/images/logo-koperasi.png"
+  },
   openGraph: {
     title: "Koperasi Agro Mulyo Lestari",
     description:
