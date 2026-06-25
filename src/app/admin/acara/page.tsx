@@ -6,8 +6,15 @@ import { Card } from "@/components/ui/card";
 import { listEvents } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
+// Active first, then upcoming (nearest date), then finished/cancelled (newest).
+const STATUS_RANK: Record<string, number> = { aktif: 0, draft: 1, selesai: 2, dibatalkan: 3 };
+
 export default async function AdminAcaraPage() {
-  const events = await listEvents();
+  const events = (await listEvents()).sort((a, b) => {
+    const rank = (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9);
+    if (rank !== 0) return rank;
+    return a.status === "draft" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+  });
 
   return (
     <div className="mx-auto max-w-container">
