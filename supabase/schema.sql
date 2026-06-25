@@ -13,6 +13,7 @@ create table profiles (
   role app_role not null default 'anggota',
   email text,
   phone text,
+  must_change_password boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -130,6 +131,17 @@ create table units (
   updated_at timestamptz not null default now()
 );
 
+create table announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text not null,
+  category text not null,
+  date date not null,
+  pinned boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table settings (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
@@ -184,6 +196,7 @@ alter table products enable row level security;
 alter table posts enable row level security;
 alter table gallery enable row level security;
 alter table units enable row level security;
+alter table announcements enable row level security;
 alter table settings enable row level security;
 alter table audit_logs enable row level security;
 
@@ -247,6 +260,8 @@ create policy "admin full access products" on products for all using (is_admin()
 create policy "admin full access posts" on posts for all using (is_admin()) with check (is_admin());
 create policy "admin full access gallery" on gallery for all using (is_admin()) with check (is_admin());
 create policy "admin full access units" on units for all using (is_admin()) with check (is_admin());
+create policy "public can read announcements" on announcements for select using (true);
+create policy "admin full access announcements" on announcements for all using (is_admin()) with check (is_admin());
 create policy "admin full access settings" on settings for all using (is_admin()) with check (is_admin());
 create policy "admin read audit logs" on audit_logs for select using (is_admin());
 create policy "admin insert audit logs" on audit_logs for insert with check (is_admin());
@@ -255,7 +270,8 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values
   ('member-photos', 'member-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
   ('news-thumbnails', 'news-thumbnails', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
-  ('board-photos', 'board-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
+  ('board-photos', 'board-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
+  ('unit-photos', 'unit-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 
