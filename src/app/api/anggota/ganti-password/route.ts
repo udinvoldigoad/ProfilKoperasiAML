@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { changeMemberPassword } from "@/lib/db/members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { memberNikToAuthEmail } from "@/lib/auth-identifiers";
 
 export async function POST(request: NextRequest) {
   const session = await getSessionUser();
@@ -26,6 +28,16 @@ export async function POST(request: NextRequest) {
 
   const result = await changeMemberPassword(session.member.id, newPassword);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+
+  // Changing the password revokes the old session, so re-issue a fresh one with
+  // the new password — the member stays logged in and lands on the dashboard.
+  const supabase = await createSupabaseServerClient();
+  if (supabase) {
+    await supabase.auth.signInWithPassword({
+      email: memberNikToAuthEmail(session.member.nik),
+      password: newPassword
+    });
+  }
 
   await logAudit({
     actorProfileId: session.profileId,
