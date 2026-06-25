@@ -106,7 +106,8 @@ export async function getMemberForSession(id: string): Promise<Member | null> {
 }
 
 export type CreateMemberInput = {
-  memberNumber: string;
+  /** Optional — left blank, the next sequential number (1, 2, 3, …) is assigned. */
+  memberNumber?: string;
   fullName: string;
   nik: string;
   birthPlace: string;
@@ -130,11 +131,23 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
     return { ok: false, error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." };
   }
 
+  // Member numbers are plain sequential integers (the village uses 1, 2, 3, …).
+  // When the admin leaves it blank, assign max(existing) + 1.
+  let memberNumber = input.memberNumber?.trim() ?? "";
+  if (!memberNumber) {
+    const { data: rows } = await admin.from("members").select("member_number");
+    const max = (rows ?? []).reduce((highest, row) => {
+      const value = parseInt(String((row as { member_number: string }).member_number), 10);
+      return Number.isFinite(value) && value > highest ? value : highest;
+    }, 0);
+    memberNumber = String(max + 1);
+  }
+
   // Reject duplicate NIK / member number early for a clear message.
   const { data: existing } = await admin
     .from("members")
     .select("id")
-    .or(`nik.eq.${input.nik},member_number.eq.${input.memberNumber}`)
+    .or(`nik.eq.${input.nik},member_number.eq.${memberNumber}`)
     .maybeSingle();
   if (existing) {
     return { ok: false, error: "NIK atau No Anggota sudah terdaftar." };
@@ -176,7 +189,7 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
     .from("members")
     .insert({
       profile_id: profile.id,
-      member_number: input.memberNumber,
+      member_number: memberNumber,
       full_name: input.fullName,
       nik: input.nik,
       birth_place: input.birthPlace,
@@ -304,9 +317,8 @@ export async function resetMemberPassword(id: string): Promise<ResetPasswordResu
   if (updateError) return { ok: false, error: updateError.message };
 
   // Reset returns the account to NIK, so require a change again on next login.
-  if (member.profile_id) {
-    await admin.from("profiles").update({ must_change_password: true }).eq("id", member.profile_id);
-  }
+  // Key on auth_user_id — the same column the session/middleware read it by.
+  await admin.from("profiles").update({ must_change_password: true }).eq("auth_user_id", authUserId);
 
   return { ok: true, password: member.nik };
 }
@@ -338,9 +350,13 @@ export async function changeMemberPassword(
   const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: newPassword });
   if (updateError) return { ok: false, error: updateError.message };
 
-  if (member.profile_id) {
-    await admin.from("profiles").update({ must_change_password: false }).eq("id", member.profile_id);
-  }
+  // Key on auth_user_id — the same column the session/middleware read it by —
+  // and surface a failure so the flag can never silently stay set.
+  const { error: flagError } = await admin
+    .from("profiles")
+    .update({ must_change_password: false })
+    .eq("auth_user_id", authUserId);
+  if (flagError) return { ok: false, error: flagError.message };
 
   return { ok: true };
 }

@@ -30,8 +30,8 @@ const EMPTY: FormState = {
   status: "aktif"
 };
 
-const TEXT_FIELDS: Array<{ key: keyof FormState; label: string; placeholder: string; type?: string; numeric?: boolean }> = [
-  { key: "memberNumber", label: "No Anggota", placeholder: "AML-2026-0005" },
+const TEXT_FIELDS: Array<{ key: keyof FormState; label: string; placeholder: string; type?: string; numeric?: boolean; hint?: string }> = [
+  { key: "memberNumber", label: "No Anggota", placeholder: "Otomatis bila dikosongkan", hint: "Nomor urut otomatis (1, 2, 3, …) jika dibiarkan kosong" },
   { key: "fullName", label: "Nama Lengkap", placeholder: "Nama anggota" },
   { key: "nik", label: "NIK", placeholder: "16 digit angka", numeric: true },
   { key: "birthPlace", label: "Tempat Lahir", placeholder: "Lampung Timur" },
@@ -105,6 +105,7 @@ export function MemberForm({ mode = "create", memberId, initial }: MemberFormPro
           <label key={field.key} className="grid gap-2 text-sm font-bold text-primary">
             {field.label}
             {locked ? <span className="text-xs font-normal text-muted-text">(tidak dapat diubah)</span> : null}
+            {!locked && field.hint ? <span className="text-xs font-normal text-muted-text">{field.hint}</span> : null}
             <input
               className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface disabled:bg-surface-gray disabled:text-muted-text"
               placeholder={field.placeholder}
@@ -121,7 +122,7 @@ export function MemberForm({ mode = "create", memberId, initial }: MemberFormPro
                     : event.target.value) as FormState[typeof field.key]
                 )
               }
-              required={field.key !== "email" && field.key !== "phone"}
+              required={field.key !== "email" && field.key !== "phone" && field.key !== "memberNumber"}
             />
           </label>
         );

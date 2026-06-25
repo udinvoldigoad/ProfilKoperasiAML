@@ -6,7 +6,8 @@ import { createMember } from "@/lib/db/members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
 
 const schema = z.object({
-  memberNumber: z.string().trim().min(1, "No Anggota wajib diisi."),
+  // Optional: blank -> server assigns the next sequential number.
+  memberNumber: z.string().trim().optional().or(z.literal("")),
   fullName: z.string().trim().min(1, "Nama wajib diisi."),
   nik: z.string().trim().refine(isValidNik, "NIK harus 16 digit angka."),
   birthPlace: z.string().trim().min(1, "Tempat lahir wajib diisi."),

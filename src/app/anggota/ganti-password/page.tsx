@@ -1,8 +1,15 @@
+import { redirect } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ChangePasswordForm } from "@/components/anggota/change-password-form";
+import { getSessionUser } from "@/lib/auth";
 
-export default function GantiPasswordPage() {
+export default async function GantiPasswordPage() {
+  const session = await getSessionUser();
+  if (!session || session.role !== "anggota") redirect("/login");
+  // Already changed (or never required) — don't show the forced form again.
+  if (!session.mustChangePassword) redirect("/anggota/dashboard");
+
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-6 flex items-start gap-3 rounded-2xl border border-secondary-container/40 bg-secondary-container/10 p-4">

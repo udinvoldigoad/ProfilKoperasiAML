@@ -34,8 +34,10 @@ export function ChangePasswordForm() {
         setError(data.error ?? "Gagal mengganti password.");
         return;
       }
+      // Changing the password may revoke the current session. Navigate to the
+      // dashboard; if the session was revoked, middleware sends the member to
+      // /login (next=dashboard) and re-login lands them on the dashboard.
       router.push("/anggota/dashboard");
-      router.refresh();
     } catch {
       setError("Tidak dapat terhubung ke server. Coba lagi.");
     } finally {
