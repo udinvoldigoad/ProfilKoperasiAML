@@ -140,46 +140,16 @@ export const attendances: Attendance[] = [
 ];
 
 export const boardMembers: BoardMember[] = [
-  // PLACEHOLDER — ganti dengan data pengurus asli.
-  // level: 1 = baris atas (Ketua), 2 = baris kedua, 3 = baris ketiga, dst.
-  // sortOrder: urutan kiri-ke-kanan dalam baris yang sama.
-  // photoUrl: isi path foto (mis. "/images/foto-ketua.jpg") atau kosongkan untuk inisial.
-  {
-    id: "b-001",
-    name: "Nama Ketua",
-    position: "Ketua Koperasi",
-    photoUrl: "",
-    period: "2025 - 2028",
-    level: 1,
-    sortOrder: 1
-  },
-  {
-    id: "b-002",
-    name: "Nama Sekretaris",
-    position: "Sekretaris",
-    photoUrl: "",
-    period: "2025 - 2028",
-    level: 2,
-    sortOrder: 1
-  },
-  {
-    id: "b-003",
-    name: "Nama Bendahara",
-    position: "Bendahara",
-    photoUrl: "",
-    period: "2025 - 2028",
-    level: 2,
-    sortOrder: 2
-  },
-  {
-    id: "b-004",
-    name: "Nama Pengawas",
-    position: "Pengawas",
-    photoUrl: "",
-    period: "2025 - 2028",
-    level: 3,
-    sortOrder: 1
-  }
+  // Edit di sini. level: 1 = Ketua (atas), 2 = baris kedua, 3 = baris ketiga, dst.
+  // sortOrder: urutan kiri-ke-kanan dalam satu baris. photoUrl: kosongkan untuk inisial.
+  { id: "b-ketua", name: "Suparno", position: "Ketua Koperasi", photoUrl: "", level: 1, sortOrder: 1 },
+  { id: "b-sekretaris", name: "Kristiana Putra", position: "Sekretaris", photoUrl: "", level: 2, sortOrder: 1 },
+  { id: "b-bendahara", name: "Pranoto", position: "Bendahara", photoUrl: "", level: 2, sortOrder: 2 },
+  { id: "b-pengawas-1", name: "Asmawik", position: "Pengawas", photoUrl: "", level: 3, sortOrder: 1 },
+  { id: "b-pengawas-2", name: "Edy Sukarno", position: "Pengawas", photoUrl: "", level: 3, sortOrder: 2 },
+  { id: "b-pengawas-3", name: "Sanyor Hermawan", position: "Pengawas", photoUrl: "", level: 3, sortOrder: 3 },
+  { id: "b-pengawas-4", name: "Taryoso", position: "Pengawas", photoUrl: "", level: 3, sortOrder: 4 },
+  { id: "b-pengawas-5", name: "Sriyono", position: "Pengawas", photoUrl: "", level: 3, sortOrder: 5 }
 ];
 
 export const products: Product[] = [
@@ -278,8 +248,8 @@ export const unitGroups: UnitGroup[] = [
       {
         id: "saprotan-1",
         name: "Toko Saprotan",
-        latitude: -5.374447,
-        longitude: 105.66287,
+        latitude: -5.374346,
+        longitude: 105.662872,
         address: "Jl. Diponegoro RT 6 RW 2 Dusun 2 Marga Sekampung, Kab. Lampung Timur",
         landmark: "0,38 KM dari balai desa",
         manager: "Andromeda Bagus Satria",
@@ -300,8 +270,8 @@ export const unitGroups: UnitGroup[] = [
       {
         id: "alpukat-anton",
         name: "Pengumpul Mas Anton",
-        latitude: -5.376874,
-        longitude: 105.663826,
+        latitude: -5.376928,
+        longitude: 105.66379,
         address: "Jl. P. Senopati, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
         landmark: "0,59 KM dari balai desa",
         manager: "Anton Marzuki",
@@ -311,8 +281,8 @@ export const unitGroups: UnitGroup[] = [
       {
         id: "alpukat-tdah",
         name: "Pengumpul TDAH Buah",
-        latitude: -5.37704,
-        longitude: 105.663992,
+        latitude: -5.377098,
+        longitude: 105.663883,
         address: "Jl. P. Senopati, Dusun 2 RT 7 Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
         landmark: "0,61 KM dari balai desa",
         manager: "Misnadi",
@@ -322,8 +292,8 @@ export const unitGroups: UnitGroup[] = [
       {
         id: "alpukat-pahrul",
         name: "Pengumpul Pahrul Buah",
-        latitude: -5.375913,
-        longitude: 105.665745,
+        latitude: -5.375964,
+        longitude: 105.665787,
         address: "Jl. P. Senopati, RT 9 Dusun 2, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
         landmark: "0,73 KM dari balai desa",
         manager: "Pahrul",
