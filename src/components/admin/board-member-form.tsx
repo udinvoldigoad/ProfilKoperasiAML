@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Save, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type FormState = {
   name: string;
@@ -115,15 +116,15 @@ export function BoardMemberForm({ mode = "create", memberId, initial }: BoardMem
           onChange={(event) => update("contact", event.target.value)}
         />
       </label>
-      <label className="grid gap-2 text-sm font-bold text-primary">
-        URL Foto (opsional)
-        <input
-          className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
-          placeholder="/images/pengurus.png"
+      <div className="md:col-span-2">
+        <ImageUploadField
+          label="Foto Pengurus (opsional)"
           value={form.photoUrl}
-          onChange={(event) => update("photoUrl", event.target.value)}
+          bucket="board-photos"
+          maxDimension={320}
+          onChange={(url) => update("photoUrl", url)}
         />
-      </label>
+      </div>
 
       {error ? (
         <p className="md:col-span-2 rounded-lg bg-error/10 px-4 py-3 text-sm font-bold text-error" role="alert">

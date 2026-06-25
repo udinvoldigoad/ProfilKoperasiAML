@@ -2,6 +2,7 @@ import type { Unit } from "@/types";
 import { units as demoUnits } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { deleteUploadedImage } from "@/lib/db/storage";
 
 type UnitRow = {
   id: string;
@@ -117,9 +118,15 @@ export async function updateUnit(id: string, input: UnitInput): Promise<Mutation
   const admin = createSupabaseAdminClient();
   if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
 
+  const { data: existing } = await admin.from("units").select("photo_url").eq("id", id).maybeSingle();
   const { error } = await admin.from("units").update(toRow(input)).eq("id", id);
 
   if (error) return { ok: false, error: error.message };
+
+  // Free the old photo if it was replaced or removed.
+  const oldPhoto = (existing as { photo_url: string | null } | null)?.photo_url;
+  if (oldPhoto && oldPhoto !== (input.photoUrl || null)) await deleteUploadedImage(oldPhoto);
+
   return { ok: true };
 }
 
@@ -127,8 +134,11 @@ export async function deleteUnit(id: string): Promise<MutationResult> {
   const admin = createSupabaseAdminClient();
   if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
 
+  const { data: existing } = await admin.from("units").select("photo_url").eq("id", id).maybeSingle();
   const { error } = await admin.from("units").delete().eq("id", id);
 
   if (error) return { ok: false, error: error.message };
+
+  await deleteUploadedImage((existing as { photo_url: string | null } | null)?.photo_url);
   return { ok: true };
 }

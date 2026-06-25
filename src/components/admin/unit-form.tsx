@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { MapPinPlus, Save } from "lucide-react";
 import { useState } from "react";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 
 type UnitStatus = "aktif" | "nonaktif";
 
@@ -155,16 +156,15 @@ export function UnitForm({ mode = "create", unitId, initial }: UnitFormProps) {
           ))}
         </select>
       </label>
-      <label className="grid gap-2 text-sm font-bold text-primary">
-        URL Foto (opsional)
-        <input
-          className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
-          placeholder="/images/unit.png"
+      <div className="md:col-span-2">
+        <ImageUploadField
+          label="Foto Unit (opsional)"
           value={form.photoUrl}
-          onChange={(event) => update("photoUrl", event.target.value)}
+          bucket="unit-photos"
+          onChange={(url) => update("photoUrl", url)}
         />
-      </label>
-      <label className="grid gap-2 text-sm font-bold text-primary">
+      </div>
+      <label className="grid gap-2 text-sm font-bold text-primary md:col-span-2">
         URL Google Maps (opsional)
         <input
           className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
