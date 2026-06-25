@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 export function AnnouncementActions({ announcementId, title }: { announcementId: string; title: string }) {
   const router = useRouter();
+  const notify = useNotify();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +23,7 @@ export function AnnouncementActions({ announcementId, title }: { announcementId:
         setError(data.error ?? "Gagal menghapus pengumuman.");
         return;
       }
+      notify("Pengumuman berhasil dihapus.");
       router.refresh();
     } catch {
       setError("Tidak dapat terhubung ke server. Coba lagi.");

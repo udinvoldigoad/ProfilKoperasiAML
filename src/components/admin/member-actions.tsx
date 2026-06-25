@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KeyRound, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 export function MemberActions({ memberId }: { memberId: string }) {
   const router = useRouter();
+  const notify = useNotify();
   const [busy, setBusy] = useState<null | "reset" | "delete">(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
@@ -40,6 +42,7 @@ export function MemberActions({ memberId }: { memberId: string }) {
         setMessage({ type: "error", text: data.error ?? "Gagal menghapus anggota." });
         return;
       }
+      notify("Anggota berhasil dinonaktifkan.");
       router.push("/admin/anggota");
       router.refresh();
     } catch {

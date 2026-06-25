@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Save } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 type EventStatus = "draft" | "aktif" | "selesai" | "dibatalkan";
 
@@ -34,6 +35,7 @@ export type EventFormProps = {
 
 export function EventForm({ mode = "create", eventId, initial }: EventFormProps) {
   const router = useRouter();
+  const notify = useNotify();
   const isEdit = mode === "edit";
   const [form, setForm] = useState<FormState>({ ...EMPTY, ...initial });
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function EventForm({ mode = "create", eventId, initial }: EventFormProps)
         setError(data.error ?? "Gagal menyimpan acara.");
         return;
       }
+      notify(isEdit ? "Acara berhasil diperbarui." : "Acara berhasil dibuat.");
       router.push(isEdit ? `/admin/acara/${eventId}` : `/admin/acara/${data.id}`);
       router.refresh();
     } catch {

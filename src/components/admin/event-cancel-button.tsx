@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { Ban, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 export function EventCancelButton({ eventId, cancelled }: { eventId: string; cancelled: boolean }) {
   const router = useRouter();
+  const notify = useNotify();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +30,7 @@ export function EventCancelButton({ eventId, cancelled }: { eventId: string; can
         setError(data.error ?? "Gagal memperbarui status acara.");
         return;
       }
+      notify(next ? "Acara berhasil dibatalkan." : "Acara berhasil diaktifkan kembali.");
       router.push(`/admin/acara/${eventId}`);
       router.refresh();
     } catch {

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Save, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 type FormState = {
   memberNumber: string;
@@ -49,6 +50,7 @@ export type MemberFormProps = {
 
 export function MemberForm({ mode = "create", memberId, initial }: MemberFormProps) {
   const router = useRouter();
+  const notify = useNotify();
   const isEdit = mode === "edit";
   const [form, setForm] = useState<FormState>({ ...EMPTY, ...initial });
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export function MemberForm({ mode = "create", memberId, initial }: MemberFormPro
         setError(data.error ?? "Gagal menyimpan anggota.");
         return;
       }
+      notify(isEdit ? "Data anggota berhasil diperbarui." : "Anggota berhasil ditambahkan.");
       router.push(isEdit ? `/admin/anggota/${memberId}` : "/admin/anggota");
       router.refresh();
     } catch {

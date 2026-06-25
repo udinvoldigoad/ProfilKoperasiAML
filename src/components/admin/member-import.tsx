@@ -5,6 +5,7 @@ import { FileSpreadsheet, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { useNotify } from "@/components/ui/notification";
 
 type ImportRow = {
   row: number;
@@ -25,6 +26,7 @@ type CommitResult = { created: number; skipped: number; errors: string[] };
 
 export function MemberImport() {
   const router = useRouter();
+  const notify = useNotify();
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ImportRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export function MemberImport() {
         return;
       }
       setResult({ created: data.created, skipped: data.skipped, errors: data.errors ?? [] });
+      notify(`Import selesai: ${data.created} anggota ditambahkan.`);
       router.refresh();
     } catch {
       setError("Tidak dapat terhubung ke server.");

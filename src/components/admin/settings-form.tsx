@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 import type { SiteProfileInput } from "@/lib/db/settings";
 
 const FIELDS: Array<{ key: keyof SiteProfileInput; label: string; type?: string }> = [
@@ -17,20 +18,18 @@ const FIELDS: Array<{ key: keyof SiteProfileInput; label: string; type?: string 
 
 export function SettingsForm({ initial }: { initial: SiteProfileInput }) {
   const router = useRouter();
+  const notify = useNotify();
   const [form, setForm] = useState<SiteProfileInput>(initial);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function update<K extends keyof SiteProfileInput>(key: K, value: SiteProfileInput[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-    setSaved(false);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setSaved(false);
     setLoading(true);
     try {
       const response = await fetch("/api/admin/pengaturan", {
@@ -43,7 +42,7 @@ export function SettingsForm({ initial }: { initial: SiteProfileInput }) {
         setError(data.error ?? "Gagal menyimpan pengaturan.");
         return;
       }
-      setSaved(true);
+      notify("Pengaturan berhasil disimpan.");
       router.refresh();
     } catch {
       setError("Tidak dapat terhubung ke server. Coba lagi.");
@@ -79,12 +78,6 @@ export function SettingsForm({ initial }: { initial: SiteProfileInput }) {
       {error ? (
         <p className="md:col-span-2 rounded-lg bg-error/10 px-4 py-3 text-sm font-bold text-error" role="alert">
           {error}
-        </p>
-      ) : null}
-      {saved ? (
-        <p className="md:col-span-2 flex items-center gap-2 rounded-lg bg-green-100 px-4 py-3 text-sm font-bold text-green-800" role="status">
-          <CheckCircle2 size={18} aria-hidden="true" />
-          Pengaturan tersimpan. Perubahan langsung tampil di footer dan halaman publik.
         </p>
       ) : null}
 

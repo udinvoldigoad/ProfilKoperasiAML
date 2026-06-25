@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Megaphone, Save } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 type FormState = {
   title: string;
@@ -28,6 +29,7 @@ export type AnnouncementFormProps = {
 
 export function AnnouncementForm({ mode = "create", announcementId, initial }: AnnouncementFormProps) {
   const router = useRouter();
+  const notify = useNotify();
   const isEdit = mode === "edit";
   const [form, setForm] = useState<FormState>({ ...EMPTY, ...initial });
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export function AnnouncementForm({ mode = "create", announcementId, initial }: A
         setError(data.error ?? "Gagal menyimpan pengumuman.");
         return;
       }
+      notify(isEdit ? "Pengumuman berhasil diperbarui." : "Pengumuman berhasil ditambahkan.");
       router.push("/admin/pengumuman");
       router.refresh();
     } catch {

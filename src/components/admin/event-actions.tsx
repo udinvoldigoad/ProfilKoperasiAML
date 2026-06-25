@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useNotify } from "@/components/ui/notification";
 
 export function EventActions({ eventId }: { eventId: string }) {
   const router = useRouter();
+  const notify = useNotify();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +23,7 @@ export function EventActions({ eventId }: { eventId: string }) {
         setError(data.error ?? "Gagal menghapus acara.");
         return;
       }
+      notify("Acara berhasil dihapus.");
       router.push("/admin/acara");
       router.refresh();
     } catch {
