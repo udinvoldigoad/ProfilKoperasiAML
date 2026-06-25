@@ -59,8 +59,9 @@ export async function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-[#bfc8cc] py-5 text-center text-sm text-on-surface-variant">
-        Koperasi Agro Mulyo Lestari, Desa Giri Mulyo.
+      <div className="grid gap-1 border-t border-[#bfc8cc] py-5 text-center text-sm text-on-surface-variant">
+        <p>Koperasi Agro Mulyo Lestari, Desa Giri Mulyo.</p>
+        <p className="font-bold text-primary">&copy; KKN Rekognisi ITERA 2026</p>
       </div>
     </footer>
   );
