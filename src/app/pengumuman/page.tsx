@@ -4,7 +4,7 @@ import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { announcements } from "@/lib/data";
+import { listAnnouncements } from "@/lib/db/announcements";
 import { formatDateID } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   description: "Pengumuman resmi Koperasi Agri Mulyo Lestari."
 };
 
-export default function PengumumanPage() {
-  const sorted = [...announcements].sort((a, b) => {
-    if (Boolean(a.pinned) !== Boolean(b.pinned)) return a.pinned ? -1 : 1;
-    return a.date < b.date ? 1 : -1;
-  });
+// Reads announcements from the DB, so it must reflect admin edits at request time.
+export const dynamic = "force-dynamic";
+
+export default async function PengumumanPage() {
+  const sorted = await listAnnouncements();
 
   return (
     <PublicShell>
