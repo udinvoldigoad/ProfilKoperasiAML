@@ -5,13 +5,16 @@ import { Card } from "@/components/ui/card";
 import { getSessionUser } from "@/lib/auth";
 import { getMemberForSession } from "@/lib/db/members";
 import { listMemberAttendances } from "@/lib/db/attendances";
-import { events } from "@/lib/data";
+import { listEvents } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
 export default async function AnggotaDashboardPage() {
   const session = await getSessionUser();
   const member = session?.member ? await getMemberForSession(session.member.id) : null;
-  const nextEvent = events.find((event) => event.status === "aktif");
+  const events = await listEvents();
+  // Highlight the event happening now, otherwise the soonest upcoming one.
+  const upcoming = events.filter((event) => event.status === "draft").sort((a, b) => a.date.localeCompare(b.date));
+  const nextEvent = events.find((event) => event.status === "aktif") ?? upcoming[0] ?? null;
   const memberAttendances = member ? (await listMemberAttendances(member.id)).slice(0, 3) : [];
 
   return (
@@ -55,7 +58,7 @@ export default async function AnggotaDashboardPage() {
             </span>
           </div>
           <h2 className="mt-3 text-sm font-bold text-primary sm:mt-5 sm:text-lg">Acara</h2>
-          <p className="mt-1 hidden text-sm text-on-surface-variant sm:block">{nextEvent ? nextEvent.title : "Belum ada acara aktif"}</p>
+          <p className="mt-1 hidden text-sm text-on-surface-variant sm:block">{nextEvent ? nextEvent.title : "Belum ada acara terjadwal"}</p>
         </Link>
 
         {/* Presensi QR — same 3-column grid, but deliberately styled to stand out. */}

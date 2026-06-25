@@ -26,8 +26,6 @@ const EMPTY: FormState = {
   status: "draft"
 };
 
-const STATUS_OPTIONS: EventStatus[] = ["draft", "aktif", "selesai", "dibatalkan"];
-
 export type EventFormProps = {
   mode?: "create" | "edit";
   eventId?: string;
@@ -122,20 +120,6 @@ export function EventForm({ mode = "create", eventId, initial }: EventFormProps)
           required
         />
       </label>
-      <label className="grid gap-2 text-sm font-bold text-primary">
-        Status
-        <select
-          className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
-          value={form.status}
-          onChange={(event) => update("status", event.target.value as EventStatus)}
-        >
-          {STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      </label>
       <label className="grid gap-2 text-sm font-bold text-primary md:col-span-2">
         Deskripsi
         <textarea
@@ -161,11 +145,9 @@ export function EventForm({ mode = "create", eventId, initial }: EventFormProps)
           {isEdit ? <Save size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
           {loading ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Simpan Acara"}
         </button>
-        {!isEdit ? (
-          <p className="mt-3 text-sm text-muted-text">
-            QR presensi dengan token unik dibuat otomatis. Atur status ke <strong>aktif</strong> agar QR bisa dipindai anggota.
-          </p>
-        ) : null}
+        <p className="mt-3 text-sm text-muted-text">
+          Status mengikuti jadwal otomatis: <strong>draft</strong> sebelum mulai, <strong>aktif</strong> selama acara berlangsung, lalu <strong>selesai</strong> setelah jam berakhir. QR presensi hanya bisa dipindai saat acara berstatus aktif.
+        </p>
       </div>
     </form>
   );

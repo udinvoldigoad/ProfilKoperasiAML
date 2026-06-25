@@ -35,14 +35,14 @@ export default async function AdminAcaraPage() {
                   Detail
                 </Link>
                 {event.status !== "selesai" ? (
-                  <>
-                    <Link className="min-h-11 rounded-lg border border-primary-container px-4 py-2 text-sm font-bold text-primary" href={`/admin/acara/${event.id}/edit`}>
-                      Edit
-                    </Link>
-                    <Link className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white" href={`/admin/acara/${event.id}/qr`}>
-                      QR
-                    </Link>
-                  </>
+                  <Link className="min-h-11 rounded-lg border border-primary-container px-4 py-2 text-sm font-bold text-primary" href={`/admin/acara/${event.id}/edit`}>
+                    Edit
+                  </Link>
+                ) : null}
+                {event.status === "draft" || event.status === "aktif" ? (
+                  <Link className="min-h-11 rounded-lg bg-primary-container px-4 py-2 text-sm font-bold text-white" href={`/admin/acara/${event.id}/qr`}>
+                    QR
+                  </Link>
                 ) : null}
               </div>
             </Card>

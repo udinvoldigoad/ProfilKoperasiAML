@@ -7,8 +7,8 @@ export default async function QrAcaraPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const event = await getEvent(id);
   if (!event) notFound();
-  // Finished events cannot generate a presensi QR.
-  if (event.status === "selesai") redirect(`/admin/acara/${event.id}`);
+  // Only upcoming/ongoing events can issue a presensi QR (not finished or cancelled).
+  if (event.status !== "draft" && event.status !== "aktif") redirect(`/admin/acara/${event.id}`);
   return (
     <div className="mx-auto max-w-3xl">
       <AdminPageHeader title="QR Presensi Acara" description="Tampilkan QR ini di layar atau unduh sebagai gambar untuk dicetak." />

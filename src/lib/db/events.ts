@@ -4,7 +4,7 @@ import {
   events as demoEvents,
   members as demoMembers
 } from "@/lib/data";
-import { eventEndToUtc } from "@/lib/utils";
+import { eventEndToUtc, resolveEventStatus } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -25,15 +25,18 @@ const EVENT_COLUMNS =
   "id, title, date, start_time, end_time, location, description, status, qr_token, qr_expires_at";
 
 function mapEventRow(row: EventRow): Event {
+  const startTime = row.start_time?.slice(0, 5) ?? row.start_time;
+  const endTime = row.end_time?.slice(0, 5) ?? row.end_time;
   return {
     id: row.id,
     title: row.title,
     date: row.date,
-    startTime: row.start_time?.slice(0, 5) ?? row.start_time,
-    endTime: row.end_time?.slice(0, 5) ?? row.end_time,
+    startTime,
+    endTime,
     location: row.location,
     description: row.description ?? "",
-    status: row.status,
+    // Status follows the schedule automatically; only "dibatalkan" stays manual.
+    status: resolveEventStatus(row.date, startTime, endTime, row.status),
     qrToken: row.qr_token,
     qrExpiresAt: row.qr_expires_at
   };
@@ -43,12 +46,21 @@ function newQrToken() {
   return `evt_${globalThis.crypto.randomUUID().replace(/-/g, "")}`;
 }
 
+/** Re-derives the time-based status of a demo event so demo mode matches DB behaviour. */
+function resolveDemoStatus(event: Event): Event {
+  return { ...event, status: resolveEventStatus(event.date, event.startTime, event.endTime, event.status) };
+}
+
+function demoEventsResolved(): Event[] {
+  return demoEvents.map(resolveDemoStatus);
+}
+
 /** All events (admin view, includes draft/selesai), newest date first. */
 export async function listEvents(): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return demoEvents;
+  if (!isSupabaseConfigured()) return demoEventsResolved();
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoEvents;
+  if (!admin) return demoEventsResolved();
 
   const { data, error } = await admin
     .from("events")
@@ -56,18 +68,22 @@ export async function listEvents(): Promise<Event[]> {
     .is("deleted_at", null)
     .order("date", { ascending: false });
 
-  if (error || !data) return demoEvents;
+  if (error || !data) return demoEventsResolved();
   return (data as EventRow[]).map(mapEventRow);
 }
 
 /** Single event by id (admin/service role). */
 export async function getEvent(id: string): Promise<Event | null> {
   if (!isSupabaseConfigured()) {
-    return demoEvents.find((event) => event.id === id) ?? null;
+    const found = demoEvents.find((event) => event.id === id);
+    return found ? resolveDemoStatus(found) : null;
   }
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoEvents.find((event) => event.id === id) ?? null;
+  if (!admin) {
+    const found = demoEvents.find((event) => event.id === id);
+    return found ? resolveDemoStatus(found) : null;
+  }
 
   const { data, error } = await admin
     .from("events")
@@ -107,7 +123,7 @@ export async function createEvent(input: EventInput, createdBy?: string): Promis
       end_time: input.endTime,
       location: input.location,
       description: input.description ?? null,
-      status: input.status,
+      status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status),
       qr_token: newQrToken(),
       qr_expires_at: eventEndToUtc(input.date, input.endTime),
       created_by: createdBy ?? null
@@ -133,11 +149,38 @@ export async function updateEvent(id: string, input: EventInput): Promise<Mutati
       end_time: input.endTime,
       location: input.location,
       description: input.description ?? null,
-      status: input.status,
+      status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status),
       qr_expires_at: eventEndToUtc(input.date, input.endTime)
     })
     .eq("id", id)
     .is("deleted_at", null);
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/**
+ * Cancels or reinstates an event. Cancelling sets the terminal "dibatalkan" status;
+ * reinstating recomputes the schedule-based status from the event's own date/time.
+ */
+export async function setEventCancelled(id: string, cancelled: boolean): Promise<MutationResult> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+
+  let nextStatus: EventStatus = "dibatalkan";
+  if (!cancelled) {
+    const { data, error } = await admin
+      .from("events")
+      .select("date, start_time, end_time")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error || !data) return { ok: false, error: error?.message ?? "Acara tidak ditemukan." };
+    const row = data as { date: string; start_time: string; end_time: string };
+    nextStatus = resolveEventStatus(row.date, row.start_time?.slice(0, 5), row.end_time?.slice(0, 5));
+  }
+
+  const { error } = await admin.from("events").update({ status: nextStatus }).eq("id", id).is("deleted_at", null);
 
   if (error) return { ok: false, error: error.message };
   return { ok: true };

@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { attendances, events } from "@/lib/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { parseQrToken } from "@/lib/utils";
+import { parseQrToken, resolveEventStatus } from "@/lib/utils";
 
 type EventRow = {
   id: string;
   title: string;
+  date: string;
+  start_time: string;
+  end_time: string;
   status: "draft" | "aktif" | "selesai" | "dibatalkan";
   qr_expires_at: string | null;
 };
@@ -34,7 +37,8 @@ function validateDemoAttendance(token: string, memberId: string) {
     return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
   }
 
-  if (event.status !== "aktif" || isExpired(event.qrExpiresAt)) {
+  const demoStatus = resolveEventStatus(event.date, event.startTime, event.endTime, event.status);
+  if (demoStatus !== "aktif" || isExpired(event.qrExpiresAt)) {
     return NextResponse.json({ ok: false, message: "Presensi belum dibuka atau acara sudah selesai." }, { status: 400 });
   }
 
@@ -90,7 +94,7 @@ export async function POST(request: NextRequest) {
 
   const { data: event, error: eventError } = await supabase
     .from("events")
-    .select("id, title, status, qr_expires_at")
+    .select("id, title, date, start_time, end_time, status, qr_expires_at")
     .eq("qr_token", token)
     .is("deleted_at", null)
     .maybeSingle<EventRow>();
@@ -103,7 +107,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
   }
 
-  if (event.status !== "aktif" || isExpired(event.qr_expires_at)) {
+  const effectiveStatus = resolveEventStatus(event.date, event.start_time?.slice(0, 5), event.end_time?.slice(0, 5), event.status);
+  if (effectiveStatus !== "aktif" || isExpired(event.qr_expires_at)) {
     return NextResponse.json({ ok: false, message: "Presensi belum dibuka atau acara sudah selesai." }, { status: 400 });
   }
 

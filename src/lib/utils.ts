@@ -17,8 +17,36 @@ export function formatDateTimeWIB(date: string) {
   return formatInTimeZone(date, WIB_TIMEZONE, "d MMMM yyyy, HH:mm 'WIB'", { locale: id });
 }
 
+export function eventStartToUtc(date: string, startTime: string) {
+  return fromZonedTime(`${date}T${startTime}:00`, WIB_TIMEZONE).toISOString();
+}
+
 export function eventEndToUtc(date: string, endTime: string) {
   return fromZonedTime(`${date}T${endTime}:00`, WIB_TIMEZONE).toISOString();
+}
+
+export type EventStatusValue = "draft" | "aktif" | "selesai" | "dibatalkan";
+
+/**
+ * Effective event status derived from its WIB schedule:
+ * before start -> "draft", within [start, end] -> "aktif", after end -> "selesai".
+ * A manually "dibatalkan" event is terminal and never recomputed.
+ */
+export function resolveEventStatus(
+  date: string,
+  startTime: string,
+  endTime: string,
+  storedStatus?: string | null,
+  now: Date = new Date()
+): EventStatusValue {
+  if (storedStatus === "dibatalkan") return "dibatalkan";
+  const start = new Date(eventStartToUtc(date, startTime)).getTime();
+  const end = new Date(eventEndToUtc(date, endTime)).getTime();
+  const current = now.getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return "draft";
+  if (current < start) return "draft";
+  if (current > end) return "selesai";
+  return "aktif";
 }
 
 export function initials(name: string) {

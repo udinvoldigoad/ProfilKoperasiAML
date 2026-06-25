@@ -2,18 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { getEventById } from "@/lib/data";
+import { getEvent } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
 export default async function DetailAcaraAnggotaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const event = getEventById(id);
+  const event = await getEvent(id);
   if (!event) notFound();
 
   return (
     <div className="grid gap-6">
       <Card>
-        <Badge tone={event.status === "aktif" ? "success" : "neutral"}>{event.status}</Badge>
+        <Badge tone={event.status === "aktif" ? "success" : event.status === "selesai" ? "neutral" : "warning"}>
+          {event.status === "draft" ? "akan datang" : event.status}
+        </Badge>
         <h1 className="mt-4 text-3xl font-extrabold text-primary">{event.title}</h1>
         <p className="mt-3 text-on-surface-variant">{event.description}</p>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
