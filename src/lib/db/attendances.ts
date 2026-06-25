@@ -1,6 +1,7 @@
 import { attendances as demoAttendances, events as demoEvents } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { wibMonthStartUtc } from "@/lib/utils";
 
 export type MemberAttendance = {
   id: string;
@@ -62,8 +63,7 @@ export async function listMemberAttendances(memberId: string): Promise<MemberAtt
 
 /** Number of attendance records logged in the current calendar month. */
 export async function countAttendancesThisMonth(): Promise<number> {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startOfMonth = wibMonthStartUtc();
 
   if (!isSupabaseConfigured()) {
     return demoAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;

@@ -21,6 +21,12 @@ export function eventStartToUtc(date: string, startTime: string) {
   return fromZonedTime(`${date}T${startTime}:00`, WIB_TIMEZONE).toISOString();
 }
 
+/** UTC ISO timestamp for the start of the current month, measured in WIB. */
+export function wibMonthStartUtc(now: Date = new Date()) {
+  const yearMonth = formatInTimeZone(now, WIB_TIMEZONE, "yyyy-MM");
+  return fromZonedTime(`${yearMonth}-01T00:00:00`, WIB_TIMEZONE).toISOString();
+}
+
 export function eventEndToUtc(date: string, endTime: string) {
   return fromZonedTime(`${date}T${endTime}:00`, WIB_TIMEZONE).toISOString();
 }
