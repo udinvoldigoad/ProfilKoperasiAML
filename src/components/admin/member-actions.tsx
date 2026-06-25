@@ -4,16 +4,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KeyRound, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useNotify } from "@/components/ui/notification";
+import { useConfirm, useNotify } from "@/components/ui/notification";
 
 export function MemberActions({ memberId }: { memberId: string }) {
   const router = useRouter();
   const notify = useNotify();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState<null | "reset" | "delete">(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   async function handleReset() {
-    if (!confirm("Reset password anggota ini ke NIK?")) return;
+    const ok = await confirm({
+      title: "Reset Password",
+      message: "Reset password anggota ini kembali ke NIK? Anggota wajib menggantinya saat login berikutnya.",
+      confirmLabel: "Reset"
+    });
+    if (!ok) return;
     setMessage(null);
     setBusy("reset");
     try {
@@ -32,7 +38,13 @@ export function MemberActions({ memberId }: { memberId: string }) {
   }
 
   async function handleDelete() {
-    if (!confirm("Nonaktifkan (soft delete) anggota ini? Data presensi tetap tersimpan.")) return;
+    const ok = await confirm({
+      title: "Nonaktifkan Anggota",
+      message: "Nonaktifkan (soft delete) anggota ini? Data presensi tetap tersimpan.",
+      confirmLabel: "Nonaktifkan",
+      danger: true
+    });
+    if (!ok) return;
     setMessage(null);
     setBusy("delete");
     try {

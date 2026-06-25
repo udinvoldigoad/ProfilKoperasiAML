@@ -4,16 +4,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useNotify } from "@/components/ui/notification";
+import { useConfirm, useNotify } from "@/components/ui/notification";
 
 export function AnnouncementActions({ announcementId, title }: { announcementId: string; title: string }) {
   const router = useRouter();
   const notify = useNotify();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    if (!window.confirm(`Hapus pengumuman "${title}"? Tindakan ini tidak dapat dibatalkan.`)) return;
+    const ok = await confirm({
+      title: "Hapus Pengumuman",
+      message: `Hapus pengumuman "${title}"? Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: "Hapus",
+      danger: true
+    });
+    if (!ok) return;
     setError(null);
     setLoading(true);
     try {

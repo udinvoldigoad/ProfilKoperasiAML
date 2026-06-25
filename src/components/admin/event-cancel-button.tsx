@@ -3,20 +3,26 @@
 import { useRouter } from "next/navigation";
 import { Ban, RotateCcw } from "lucide-react";
 import { useState } from "react";
-import { useNotify } from "@/components/ui/notification";
+import { useConfirm, useNotify } from "@/components/ui/notification";
 
 export function EventCancelButton({ eventId, cancelled }: { eventId: string; cancelled: boolean }) {
   const router = useRouter();
   const notify = useNotify();
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleToggle() {
     const next = !cancelled;
-    const confirmMessage = next
-      ? "Batalkan acara ini? QR presensi tidak akan aktif selama acara dibatalkan."
-      : "Aktifkan kembali acara ini? Status akan mengikuti jadwal otomatis.";
-    if (!window.confirm(confirmMessage)) return;
+    const ok = await confirm({
+      title: next ? "Batalkan Acara" : "Aktifkan Kembali",
+      message: next
+        ? "Batalkan acara ini? QR presensi tidak akan aktif selama acara dibatalkan."
+        : "Aktifkan kembali acara ini? Status akan mengikuti jadwal otomatis.",
+      confirmLabel: next ? "Batalkan" : "Aktifkan",
+      danger: next
+    });
+    if (!ok) return;
     setError(null);
     setLoading(true);
     try {
