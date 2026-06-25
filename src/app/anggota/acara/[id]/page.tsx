@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { BackButton } from "@/components/ui/back-button";
 import { getEvent } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ export default async function DetailAcaraAnggotaPage({ params }: { params: Promi
 
   return (
     <div className="grid gap-6">
+      <BackButton />
       <Card>
         <Badge tone={event.status === "aktif" ? "success" : event.status === "selesai" ? "neutral" : "warning"}>
           {event.status === "draft" ? "akan datang" : event.status}
