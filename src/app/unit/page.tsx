@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   description: "Empat unit usaha Koperasi Agri Mulyo Lestari beserta lokasi pada peta."
 };
 
+// Reads units from the DB, so it must reflect admin edits at request time.
+export const dynamic = "force-dynamic";
+
 export default async function UnitPage() {
   const units = await listActiveUnits();
   const mapUnits = units.map((unit) => ({

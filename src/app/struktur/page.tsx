@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Bagan silsilah kepengurusan Koperasi Agri Mulyo Lestari."
 };
 
+// Reads board members from the DB, so it must reflect admin edits at request time.
+export const dynamic = "force-dynamic";
+
 function initials(name: string) {
   return name
     .split(" ")
