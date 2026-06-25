@@ -24,13 +24,13 @@ export default async function AdminAnggotaPage() {
         title="Manajemen Anggota"
         description="Kelola anggota, validasi NIK 16 digit, filter tipe anggota, import Excel, reset password, dan export data."
         actions={
-          <div className="grid w-full grid-cols-3 gap-3">
-            <Link className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary" href="/admin/anggota/import">
+          <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+            <Link className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-primary-container bg-white px-3 text-sm font-bold text-primary" href="/admin/anggota/import">
               <FileUp size={18} aria-hidden="true" className="shrink-0" />
               Import Excel
             </Link>
             <ExportButton filename="anggota-koperasi-aml.csv" rows={exportRows} />
-            <Link className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary-container px-4 text-sm font-bold text-white" href="/admin/anggota/tambah">
+            <Link className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-primary-container px-3 text-sm font-bold text-white sm:col-span-1" href="/admin/anggota/tambah">
               <UserPlus size={18} aria-hidden="true" className="shrink-0" />
               Tambah Anggota
             </Link>

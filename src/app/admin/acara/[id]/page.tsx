@@ -70,18 +70,18 @@ export default async function DetailAcaraPage({ params }: { params: Promise<{ id
         </Card>
         <Card>
           <h2 className="text-xl font-bold text-primary">Ringkasan Presensi</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-surface-gray p-4">
-              <p className="text-sm font-bold text-muted-text">Peserta</p>
-              <p className="text-3xl font-extrabold text-primary">{rows.length}</p>
+          <div className="mt-5 grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="rounded-2xl bg-surface-gray p-3 sm:p-4">
+              <p className="text-xs font-bold leading-tight text-muted-text sm:text-sm">Peserta</p>
+              <p className="mt-1 text-2xl font-extrabold text-primary sm:text-3xl">{rows.length}</p>
             </div>
-            <div className="rounded-2xl bg-green-100 p-4">
-              <p className="text-sm font-bold text-green-800">Hadir</p>
-              <p className="text-3xl font-extrabold text-green-900">{present}</p>
+            <div className="rounded-2xl bg-green-100 p-3 sm:p-4">
+              <p className="text-xs font-bold leading-tight text-green-800 sm:text-sm">Hadir</p>
+              <p className="mt-1 text-2xl font-extrabold text-green-900 sm:text-3xl">{present}</p>
             </div>
-            <div className="rounded-2xl bg-amber-100 p-4">
-              <p className="text-sm font-bold text-amber-800">Tidak Hadir</p>
-              <p className="text-3xl font-extrabold text-amber-900">{rows.length - present}</p>
+            <div className="rounded-2xl bg-amber-100 p-3 sm:p-4">
+              <p className="text-xs font-bold leading-tight text-amber-800 sm:text-sm">Tidak Hadir</p>
+              <p className="mt-1 text-2xl font-extrabold text-amber-900 sm:text-3xl">{rows.length - present}</p>
             </div>
           </div>
           {event.description ? <p className="mt-5 text-on-surface-variant">{event.description}</p> : null}

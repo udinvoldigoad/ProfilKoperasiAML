@@ -55,12 +55,12 @@ export default async function AdminDashboardPage() {
         }
       />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-4">
         {stats.map(([label, value, helper]) => (
-          <Card key={label}>
-            <p className="text-sm font-bold text-muted-text">{label}</p>
-            <p className="mt-3 text-3xl font-extrabold text-primary">{value}</p>
-            <p className="mt-2 text-sm text-on-surface-variant">{helper}</p>
+          <Card key={label} className="p-4 sm:p-6">
+            <p className="text-xs font-bold text-muted-text sm:text-sm">{label}</p>
+            <p className="mt-2 text-2xl font-extrabold text-primary sm:mt-3 sm:text-3xl">{value}</p>
+            <p className="mt-1 text-xs text-on-surface-variant sm:mt-2 sm:text-sm">{helper}</p>
           </Card>
         ))}
       </div>
