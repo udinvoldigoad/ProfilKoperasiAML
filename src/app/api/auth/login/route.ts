@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { isValidNik, memberNikToAuthEmail } from "@/lib/auth-identifiers";
 import { DASHBOARD_BY_ROLE, type Role } from "@/lib/auth-roles";
+import { clientIp } from "@/lib/db/audit-logs";
+import { checkLoginAllowed, clearLoginFailures, registerLoginFailure } from "@/lib/login-rate-limit";
 
 function safeNext(value: unknown) {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return null;
@@ -15,6 +17,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Supabase belum dikonfigurasi. Gunakan tombol Masuk Demo." },
       { status: 503 }
+    );
+  }
+
+  // Server-side brute-force throttle per IP.
+  const rateKey = clientIp(request) ?? "unknown";
+  const gate = checkLoginAllowed(rateKey);
+  if (!gate.allowed) {
+    const minutes = Math.max(1, Math.ceil(gate.retryAfterSec / 60));
+    return NextResponse.json(
+      { error: `Terlalu banyak percobaan login gagal. Coba lagi dalam ${minutes} menit atau hubungi admin.` },
+      { status: 429, headers: { "Retry-After": String(gate.retryAfterSec) } }
     );
   }
 
@@ -51,9 +64,13 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.user) {
+    registerLoginFailure(rateKey);
     const message = mode === "anggota" ? "NIK atau password salah." : "Email atau password salah.";
     return NextResponse.json({ error: message }, { status: 401 });
   }
+
+  // Valid credentials — never keep this IP throttled.
+  clearLoginFailures(rateKey);
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
