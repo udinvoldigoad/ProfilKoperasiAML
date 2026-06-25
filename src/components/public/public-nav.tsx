@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf, LogIn, Menu, X } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -67,9 +67,7 @@ export function PublicNav() {
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-white/95 backdrop-blur">
       <div className="container-page flex h-20 items-center justify-between">
         <Link href="/" className="flex min-h-11 items-center gap-3 text-primary" aria-label="Beranda Koperasi AML">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-white">
-            <Leaf size={22} aria-hidden="true" />
-          </span>
+          <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
           <span className="max-w-[190px] text-base font-extrabold leading-tight sm:max-w-none sm:text-xl">
             Agro Mulyo Lestari
           </span>

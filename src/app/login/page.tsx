@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Leaf, ShieldCheck, UserRound } from "lucide-react";
+import { ShieldCheck, UserRound } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
@@ -26,9 +26,7 @@ export default async function LoginPage({
       <section className="container-page flex min-h-[70vh] items-center justify-center py-12 sm:py-16">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-container text-white shadow-soft">
-              <Leaf size={26} aria-hidden="true" />
-            </span>
+            <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="mx-auto h-16 w-16 object-contain" />
             <h1 className="mt-4 text-2xl font-extrabold text-primary sm:text-3xl">Masuk Portal Koperasi</h1>
             <p className="mt-2 text-sm text-on-surface-variant">
               Anggota masuk dengan <strong>NIK</strong>, admin dengan <strong>email</strong>.

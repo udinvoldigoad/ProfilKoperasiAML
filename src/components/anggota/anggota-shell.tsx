@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, History, Home, Leaf, Menu, QrCode, UserRound, X } from "lucide-react";
+import { CalendarDays, History, Home, Menu, QrCode, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LogoutForm } from "@/components/auth/logout-form";
@@ -36,9 +36,7 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
     <aside className="flex h-full w-72 flex-col border-r border-border-subtle bg-white px-4 py-5">
       <div className="mb-6 flex items-center justify-between gap-2">
         <Link href="/anggota/dashboard" className="flex min-h-11 items-center gap-3 px-2 text-primary">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-white">
-            <Leaf size={22} aria-hidden="true" />
-          </span>
+          <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
           <span>
             <span className="block text-lg font-extrabold leading-tight">Koperasi AML</span>
             <span className="block text-sm text-muted-text">Portal Anggota</span>
