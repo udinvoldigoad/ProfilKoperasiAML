@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Real Supabase session.
-  const { response, user, role } = await getMiddlewareSession(request);
+  const { response, user, role, mustChangePassword } = await getMiddlewareSession(request);
 
   if (!user) {
     return loginRedirect(request);
@@ -45,6 +45,12 @@ export async function middleware(request: NextRequest) {
 
   if (isMemberArea && role !== "anggota") {
     return dashboardRedirect(request, "/admin/dashboard");
+  }
+
+  // Members on their initial (NIK) password must change it before doing anything else.
+  const changePasswordPath = "/anggota/ganti-password";
+  if (role === "anggota" && mustChangePassword && pathname !== changePasswordPath) {
+    return dashboardRedirect(request, changePasswordPath);
   }
 
   return response;

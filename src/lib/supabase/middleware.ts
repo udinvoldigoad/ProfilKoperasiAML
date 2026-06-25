@@ -7,6 +7,7 @@ export type MiddlewareSession = {
   response: NextResponse;
   user: { id: string } | null;
   role: Role | null;
+  mustChangePassword: boolean;
 };
 
 /**
@@ -18,7 +19,7 @@ export async function getMiddlewareSession(request: NextRequest): Promise<Middle
   let response = NextResponse.next({ request });
 
   if (!isSupabaseConfigured()) {
-    return { response, user: null, role: null };
+    return { response, user: null, role: null, mustChangePassword: false };
   }
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -39,14 +40,19 @@ export async function getMiddlewareSession(request: NextRequest): Promise<Middle
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { response, user: null, role: null };
+    return { response, user: null, role: null, mustChangePassword: false };
   }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, must_change_password")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  return { response, user: { id: user.id }, role: (profile?.role as Role) ?? null };
+  return {
+    response,
+    user: { id: user.id },
+    role: (profile?.role as Role) ?? null,
+    mustChangePassword: Boolean(profile?.must_change_password)
+  };
 }

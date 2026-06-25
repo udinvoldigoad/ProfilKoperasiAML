@@ -155,7 +155,14 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
   const { data: profile, error: profileError } = await admin
     .from("profiles")
     .upsert(
-      { auth_user_id: created.user.id, role: "anggota", email: input.email ?? null, phone: input.phone ?? null },
+      {
+        auth_user_id: created.user.id,
+        role: "anggota",
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        // Initial password is the NIK; force a change on first login.
+        must_change_password: true
+      },
       { onConflict: "auth_user_id" }
     )
     .select("id")
@@ -296,5 +303,44 @@ export async function resetMemberPassword(id: string): Promise<ResetPasswordResu
   const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: member.nik });
   if (updateError) return { ok: false, error: updateError.message };
 
+  // Reset returns the account to NIK, so require a change again on next login.
+  if (member.profile_id) {
+    await admin.from("profiles").update({ must_change_password: true }).eq("id", member.profile_id);
+  }
+
   return { ok: true, password: member.nik };
+}
+
+/**
+ * Changes a member's own password (forced first-login flow). Verifies the new
+ * password differs from the NIK and clears the must_change_password flag.
+ */
+export async function changeMemberPassword(
+  memberId: string,
+  newPassword: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+
+  const { data: member, error } = await admin
+    .from("members")
+    .select("nik, profile_id, profiles(auth_user_id)")
+    .eq("id", memberId)
+    .maybeSingle<{ nik: string; profile_id: string | null; profiles: { auth_user_id: string | null } | null }>();
+
+  if (error || !member) return { ok: false, error: "Anggota tidak ditemukan." };
+  if (newPassword === member.nik) {
+    return { ok: false, error: "Password baru tidak boleh sama dengan NIK." };
+  }
+  const authUserId = member.profiles?.auth_user_id;
+  if (!authUserId) return { ok: false, error: "Anggota belum punya akun login." };
+
+  const { error: updateError } = await admin.auth.admin.updateUserById(authUserId, { password: newPassword });
+  if (updateError) return { ok: false, error: updateError.message };
+
+  if (member.profile_id) {
+    await admin.from("profiles").update({ must_change_password: false }).eq("id", member.profile_id);
+  }
+
+  return { ok: true };
 }

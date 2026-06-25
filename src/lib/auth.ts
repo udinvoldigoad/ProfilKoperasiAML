@@ -18,6 +18,8 @@ export type SessionUser = {
   role: Role;
   email: string | null;
   member: SessionMember | null;
+  /** True when the member must change their initial (NIK) password before continuing. */
+  mustChangePassword: boolean;
   /** True when the session is a demo cookie session, not a real Supabase user. */
   demo: boolean;
 };
@@ -45,7 +47,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("id, role, email")
+    .select("id, role, email, must_change_password")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
@@ -77,6 +79,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     role: profile.role as Role,
     email: profile.email ?? user.email ?? null,
     member,
+    mustChangePassword: Boolean(profile.must_change_password),
     demo: false
   };
 }
@@ -93,6 +96,7 @@ async function getDemoSessionUser(): Promise<SessionUser | null> {
       role: "admin",
       email: "admin@agrimulyolestari.id",
       member: null,
+      mustChangePassword: false,
       demo: true
     };
   }
@@ -110,6 +114,7 @@ async function getDemoSessionUser(): Promise<SessionUser | null> {
         nik: "1807061204860001",
         status: "aktif"
       },
+      mustChangePassword: false,
       demo: true
     };
   }
