@@ -75,6 +75,7 @@ create table board_members (
   photo_url text,
   contact text,
   period text,
+  level integer not null default 2,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

@@ -9,10 +9,8 @@ import {
   Images,
   LayoutDashboard,
   Leaf,
-  MapPin,
   Megaphone,
   Menu,
-  Network,
   Settings,
   Users,
   X
@@ -27,8 +25,6 @@ const navItems = [
   { href: "/admin/acara", label: "Acara", icon: CalendarDays },
   { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
   { href: "/admin/galeri", label: "Galeri", icon: Images },
-  { href: "/admin/struktur", label: "Struktur", icon: Network },
-  { href: "/admin/unit", label: "Unit", icon: MapPin },
   { href: "/admin/laporan", label: "Laporan", icon: FileSpreadsheet },
   { href: "/admin/audit-log", label: "Audit Log", icon: History },
   { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings }

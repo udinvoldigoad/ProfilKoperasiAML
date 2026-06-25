@@ -8,7 +8,7 @@ import type {
   Member,
   Post,
   Product,
-  Unit
+  UnitGroup
 } from "@/types";
 import { eventEndToUtc } from "@/lib/utils";
 
@@ -140,56 +140,70 @@ export const attendances: Attendance[] = [
 ];
 
 export const boardMembers: BoardMember[] = [
+  // PLACEHOLDER — ganti dengan data pengurus asli.
+  // level: 1 = baris atas (Ketua), 2 = baris kedua, 3 = baris ketiga, dst.
+  // sortOrder: urutan kiri-ke-kanan dalam baris yang sama.
+  // photoUrl: isi path foto (mis. "/images/foto-ketua.jpg") atau kosongkan untuk inisial.
   {
     id: "b-001",
-    name: "Mulyono",
+    name: "Nama Ketua",
     position: "Ketua Koperasi",
-    photoUrl: "/images/rapat-koperasi.png",
-    contact: "+6281270010101",
+    photoUrl: "",
     period: "2025 - 2028",
+    level: 1,
     sortOrder: 1
   },
   {
     id: "b-002",
-    name: "Sri Wahyuni",
+    name: "Nama Sekretaris",
     position: "Sekretaris",
-    photoUrl: "/images/rapat-koperasi.png",
-    contact: "+6281270010102",
+    photoUrl: "",
     period: "2025 - 2028",
-    sortOrder: 2
+    level: 2,
+    sortOrder: 1
   },
   {
     id: "b-003",
-    name: "Eko Prasetyo",
+    name: "Nama Bendahara",
     position: "Bendahara",
-    photoUrl: "/images/rapat-koperasi.png",
+    photoUrl: "",
     period: "2025 - 2028",
-    sortOrder: 3
+    level: 2,
+    sortOrder: 2
+  },
+  {
+    id: "b-004",
+    name: "Nama Pengawas",
+    position: "Pengawas",
+    photoUrl: "",
+    period: "2025 - 2028",
+    level: 3,
+    sortOrder: 1
   }
 ];
 
 export const products: Product[] = [
   {
-    id: "pr-001",
-    title: "Simpan Pinjam Anggota",
-    description: "Layanan modal bergulir untuk kebutuhan produktif anggota koperasi.",
-    imageUrl: "/images/rapat-koperasi.png",
-    category: "Keuangan",
-    status: "aktif"
-  },
-  {
     id: "pr-002",
-    title: "Pengadaan Kebutuhan Pertanian",
-    description: "Pengadaan pupuk, bibit, dan alat pendukung usaha tani secara kolektif.",
+    title: "Sarana Produksi Pertanian",
+    description: "Penyediaan pupuk, benih, dan alat pendukung kebutuhan usaha tani anggota.",
     imageUrl: "/images/hero-desa-giri-mulyo.png",
     category: "Pertanian",
     status: "aktif"
   },
   {
     id: "pr-003",
-    title: "Distribusi Hasil Panen",
-    description: "Koordinasi penjualan hasil panen anggota ke mitra pasar dan pengepul.",
+    title: "Jual Beli Bibit Pertanian",
+    description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga.",
     imageUrl: "/images/hero-desa-giri-mulyo.png",
+    category: "Pertanian",
+    status: "aktif"
+  },
+  {
+    id: "pr-004",
+    title: "Gudang Distribusi Pertanian Alpukat",
+    description: "Pengumpulan, penyortiran, dan distribusi hasil panen alpukat ke mitra pasar.",
+    imageUrl: "/images/rapat-koperasi.png",
     category: "Distribusi",
     status: "aktif"
   }
@@ -251,54 +265,81 @@ export const hardcodedGallery: GalleryItem[] = [
   }
 ];
 
-export const units: Unit[] = [
+// Hardcoded units (edit here). A unit category can hold several location points.
+export const unitGroups: UnitGroup[] = [
   {
-    id: "u-001",
-    name: "Koperasi Utama",
-    type: "Kantor Utama",
-    address: "Balai Desa Giri Mulyo, Kec. Marga Sekampung",
-    latitude: -5.3112,
-    longitude: 105.5864,
-    contact: "+6281234567890",
-    description: "Pusat administrasi, pelayanan anggota, dan pengambilan keputusan koperasi.",
-    photoUrl: "/images/rapat-koperasi.png",
-    status: "aktif"
+    id: "saprotan",
+    name: "Sarana Produksi Pertanian (Saprotan)",
+    category: "Saprotan",
+    type: "Toko pertanian",
+    description: "Penyedia kebutuhan perawatan perkebunan dan sarana produksi pertanian bagi anggota dan warga.",
+    status: "aktif",
+    points: [
+      {
+        id: "saprotan-1",
+        name: "Toko Saprotan",
+        latitude: -5.374447,
+        longitude: 105.66287,
+        address: "Jl. Diponegoro RT 6 RW 2 Dusun 2 Marga Sekampung, Kab. Lampung Timur",
+        landmark: "0,38 KM dari balai desa",
+        manager: "Andromeda Bagus Satria",
+        hours: "06.00 - 22.00 WIB",
+        contact: "082150077353"
+      }
+    ]
   },
   {
-    id: "u-002",
-    name: "Sarana Produksi Pertanian",
-    type: "Unit Usaha",
-    address: "Dusun Krajan, Desa Giri Mulyo",
-    latitude: -5.3148,
-    longitude: 105.5901,
-    contact: "+6281234567891",
-    description: "Penyediaan pupuk, benih, dan alat pendukung kebutuhan usaha tani anggota.",
-    photoUrl: "/images/hero-desa-giri-mulyo.png",
-    status: "aktif"
-  },
-  {
-    id: "u-003",
+    id: "alpukat",
     name: "Gudang Distribusi Pertanian Alpukat",
-    type: "Gudang Distribusi",
-    address: "Dusun Sumber Makmur, Desa Giri Mulyo",
-    latitude: -5.3183,
-    longitude: 105.5922,
-    contact: "+6281234567892",
-    description: "Titik pengumpulan, penyortiran, dan distribusi hasil panen alpukat ke mitra pasar.",
-    photoUrl: "/images/hero-desa-giri-mulyo.png",
-    status: "aktif"
+    category: "Distribusi Alpukat",
+    type: "Pemasaran / pengumpul buah alpukat",
+    description:
+      "Pengumpulan, penimbangan, pemasaran, dan penjaminan pembelian hasil panen alpukat petani. Tersebar di beberapa titik pengumpul.",
+    status: "aktif",
+    points: [
+      {
+        id: "alpukat-anton",
+        name: "Pengumpul Mas Anton",
+        latitude: -5.376874,
+        longitude: 105.663826,
+        address: "Jl. P. Senopati, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
+        landmark: "0,59 KM dari balai desa",
+        manager: "Anton Marzuki",
+        hours: "Menyesuaikan aktivitas panen",
+        contact: "082177779347"
+      },
+      {
+        id: "alpukat-tdah",
+        name: "Pengumpul TDAH Buah",
+        latitude: -5.37704,
+        longitude: 105.663992,
+        address: "Jl. P. Senopati, Dusun 2 RT 7 Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
+        landmark: "0,61 KM dari balai desa",
+        manager: "Misnadi",
+        hours: "Menyesuaikan aktivitas panen",
+        contact: "081366732877"
+      },
+      {
+        id: "alpukat-pahrul",
+        name: "Pengumpul Pahrul Buah",
+        latitude: -5.375913,
+        longitude: 105.665745,
+        address: "Jl. P. Senopati, RT 9 Dusun 2, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
+        landmark: "0,73 KM dari balai desa",
+        manager: "Pahrul",
+        hours: "Menyesuaikan aktivitas panen",
+        contact: "081278899761"
+      }
+    ]
   },
   {
-    id: "u-004",
+    id: "bibit",
     name: "Jual Beli Bibit Pertanian",
-    type: "Unit Usaha",
-    address: "Dusun Tani Makmur, Desa Giri Mulyo",
-    latitude: -5.3091,
-    longitude: 105.5839,
-    contact: "+6281234567893",
-    description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga.",
-    photoUrl: "/images/rapat-koperasi.png",
-    status: "aktif"
+    category: "Bibit",
+    type: "Penyediaan & penjualan bibit",
+    description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga. Data lokasi menyusul.",
+    status: "menyusul",
+    points: []
   }
 ];
 

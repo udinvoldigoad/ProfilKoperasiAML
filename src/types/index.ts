@@ -48,6 +48,8 @@ export type BoardMember = {
   photoUrl: string;
   contact?: string;
   period?: string;
+  /** Chart tier: 1 = Ketua (top row), 2 = second row, 3 = third row, … */
+  level: number;
   sortOrder: number;
 };
 
@@ -94,6 +96,30 @@ export type Unit = {
   photoUrl?: string;
   mapsUrl?: string;
   status: "aktif" | "nonaktif";
+};
+
+/** One physical location within a unit category (a unit can have several). */
+export type UnitPoint = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+  landmark?: string;
+  manager?: string;
+  hours?: string;
+  contact?: string;
+};
+
+/** A unit category (e.g. Distribusi Alpukat) that groups one or more points. */
+export type UnitGroup = {
+  id: string;
+  name: string;
+  category: string;
+  type: string;
+  description: string;
+  status: "aktif" | "menyusul";
+  points: UnitPoint[];
 };
 
 export type Announcement = {
