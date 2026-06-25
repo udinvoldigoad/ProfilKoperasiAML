@@ -110,6 +110,22 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
 
     async function start() {
       try {
+        // Camera (getUserMedia) only works in a secure context: https or
+        // localhost/127.0.0.1. Over http on a LAN IP (e.g. from a phone) the
+        // browser blocks it silently — no permission prompt ever appears.
+        if (typeof window !== "undefined" && !window.isSecureContext) {
+          setState("error");
+          setMessage(
+            "Kamera hanya bisa diakses lewat HTTPS atau localhost. Saat ini situs dibuka tanpa HTTPS, jadi browser memblokir kamera. Buka lewat alamat HTTPS untuk presensi."
+          );
+          return;
+        }
+        if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+          setState("error");
+          setMessage("Perangkat atau browser ini tidak mendukung akses kamera. Coba browser lain (mis. Chrome).");
+          return;
+        }
+
         const { Html5Qrcode } = await import("html5-qrcode");
         if (!mounted || scannerRef.current || hasSubmittedRef.current) return;
 
