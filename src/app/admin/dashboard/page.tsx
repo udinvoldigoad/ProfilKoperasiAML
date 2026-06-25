@@ -19,10 +19,11 @@ export default async function AdminDashboardPage() {
   const activeMembers = members.filter((member) => member.status === "aktif").length;
   const activeEvents = events.filter((event) => event.status === "aktif").length;
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Same ordering as the member dashboard: active first, then nearest upcoming.
+  const STATUS_RANK: Record<string, number> = { aktif: 0, draft: 1, selesai: 2, dibatalkan: 3 };
   const upcomingEvents = events
-    .filter((event) => event.date >= today && event.status !== "selesai" && event.status !== "dibatalkan")
-    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .filter((event) => event.status !== "selesai" && event.status !== "dibatalkan")
+    .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) || a.date.localeCompare(b.date))
     .slice(0, 3);
 
   const recentMembers = [...members]
