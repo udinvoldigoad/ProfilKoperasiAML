@@ -71,6 +71,18 @@ html::-webkit-scrollbar-thumb:hover {
   background-clip: padding-box;
 }
 
+/* Hide the page scrollbar on mobile (scrolling still works). */
+@media (max-width: 639px) {
+  html {
+    scrollbar-width: none;
+    scrollbar-gutter: auto;
+  }
+  html::-webkit-scrollbar {
+    width: 0;
+    display: none;
+  }
+}
+
 .table-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(6, 83, 102, 0.85) transparent;
