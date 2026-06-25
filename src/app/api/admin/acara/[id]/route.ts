@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { softDeleteEvent, updateEvent } from "@/lib/db/events";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
-import { eventSchema } from "../route";
+import { eventSchema } from "../schema";
 
 async function requireAdmin() {
   const session = await getSessionUser();

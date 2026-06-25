@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { createBoardMember } from "@/lib/db/board-members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
-
-export const boardMemberSchema = z.object({
-  name: z.string().trim().min(1, "Nama wajib diisi."),
-  position: z.string().trim().min(1, "Jabatan wajib diisi."),
-  photoUrl: z.string().trim().optional().or(z.literal("")),
-  contact: z.string().trim().optional().or(z.literal("")),
-  period: z.string().trim().optional().or(z.literal("")),
-  sortOrder: z.coerce.number().int("Urutan harus bilangan bulat.").min(0, "Urutan tidak boleh negatif.")
-});
+import { boardMemberSchema } from "./schema";
 
 async function requireAdmin() {
   const session = await getSessionUser();

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteBoardMember, updateBoardMember } from "@/lib/db/board-members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
-import { boardMemberSchema } from "../route";
+import { boardMemberSchema } from "../schema";
 
 async function requireAdmin() {
   const session = await getSessionUser();
