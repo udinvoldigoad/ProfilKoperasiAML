@@ -4,7 +4,6 @@ create type app_role as enum ('admin', 'anggota');
 create type member_status as enum ('aktif', 'nonaktif', 'ditangguhkan');
 create type member_type as enum ('anggota_lama', 'anggota_baru');
 create type event_status as enum ('draft', 'aktif', 'selesai', 'dibatalkan');
-create type publish_status as enum ('draft', 'publish');
 create type attendance_method as enum ('qr_code', 'manual');
 
 create table profiles (
@@ -68,70 +67,6 @@ create table attendances (
   unique (event_id, member_id)
 );
 
-create table board_members (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  position text not null,
-  photo_url text,
-  contact text,
-  period text,
-  level integer not null default 2,
-  sort_order integer not null default 0,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table products (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  description text not null,
-  image_url text,
-  category text not null,
-  status text not null default 'aktif',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table posts (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  slug text not null unique,
-  thumbnail_url text,
-  content text not null,
-  author_id uuid references profiles(id) on delete set null,
-  status publish_status not null default 'draft',
-  published_at timestamptz,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table gallery (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  image_url text not null,
-  description text,
-  event_date date,
-  category text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table units (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  type text not null,
-  address text not null,
-  latitude numeric not null,
-  longitude numeric not null,
-  contact text,
-  description text,
-  photo_url text,
-  maps_url text,
-  status text not null default 'aktif',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
 create table announcements (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -163,6 +98,9 @@ create table audit_logs (
   created_at timestamptz not null default now()
 );
 
+-- Note: struktur pengurus, unit, produk, dan galeri bersifat hardcoded di aplikasi
+-- (src/lib/data.ts), jadi tidak membutuhkan tabel di sini.
+
 create index members_status_type_idx on members(status, member_type) where deleted_at is null;
 create index events_status_date_idx on events(status, date) where deleted_at is null;
 create index attendances_member_idx on attendances(member_id);
@@ -192,29 +130,9 @@ alter table profiles enable row level security;
 alter table members enable row level security;
 alter table events enable row level security;
 alter table attendances enable row level security;
-alter table board_members enable row level security;
-alter table products enable row level security;
-alter table posts enable row level security;
-alter table gallery enable row level security;
-alter table units enable row level security;
 alter table announcements enable row level security;
 alter table settings enable row level security;
 alter table audit_logs enable row level security;
-
-create policy "public can read published content" on posts
-for select using (status = 'publish');
-
-create policy "public can read profile content" on board_members
-for select using (true);
-
-create policy "public can read active products" on products
-for select using (status = 'aktif');
-
-create policy "public can read gallery" on gallery
-for select using (true);
-
-create policy "public can read active units" on units
-for select using (status = 'aktif');
 
 create policy "admin full access profiles" on profiles
 for all using (is_admin()) with check (is_admin());
@@ -256,23 +174,8 @@ for select using (
   )
 );
 
-create policy "admin full access board members" on board_members for all using (is_admin()) with check (is_admin());
-create policy "admin full access products" on products for all using (is_admin()) with check (is_admin());
-create policy "admin full access posts" on posts for all using (is_admin()) with check (is_admin());
-create policy "admin full access gallery" on gallery for all using (is_admin()) with check (is_admin());
-create policy "admin full access units" on units for all using (is_admin()) with check (is_admin());
 create policy "public can read announcements" on announcements for select using (true);
 create policy "admin full access announcements" on announcements for all using (is_admin()) with check (is_admin());
 create policy "admin full access settings" on settings for all using (is_admin()) with check (is_admin());
 create policy "admin read audit logs" on audit_logs for select using (is_admin());
 create policy "admin insert audit logs" on audit_logs for insert with check (is_admin());
-
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values
-  ('member-photos', 'member-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
-  ('news-thumbnails', 'news-thumbnails', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
-  ('board-photos', 'board-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
-  ('unit-photos', 'unit-photos', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
-on conflict (id) do nothing;
-
-
