@@ -1,8 +1,9 @@
 ﻿import Link from "next/link";
 import { Leaf, Mail, MapPin, Phone } from "lucide-react";
-import { siteProfile } from "@/lib/data";
+import { getSiteProfile } from "@/lib/db/settings";
 
-export function Footer() {
+export async function Footer() {
+  const siteProfile = await getSiteProfile();
   return (
     <footer className="border-t border-border-subtle bg-[#dee9fd]">
       <div className="container-page grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_1fr]">

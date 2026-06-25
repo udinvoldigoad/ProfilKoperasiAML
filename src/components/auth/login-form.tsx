@@ -8,7 +8,7 @@ import { RegisterCta } from "@/components/auth/register-cta";
 
 type Mode = "anggota" | "admin";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("anggota");
   const [identifier, setIdentifier] = useState("");
@@ -142,7 +142,7 @@ export function LoginForm({ next }: { next?: string }) {
         {loading ? "Memproses..." : mode === "anggota" ? "Login Anggota" : "Login Admin"}
       </button>
     </form>
-    {mode === "anggota" ? <RegisterCta /> : null}
+    {mode === "anggota" ? <RegisterCta whatsapp={whatsapp} /> : null}
     </>
   );
 }

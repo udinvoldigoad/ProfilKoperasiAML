@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterCta } from "@/components/auth/register-cta";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getSiteProfile } from "@/lib/db/settings";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -18,6 +19,7 @@ export default async function LoginPage({
 }) {
   const { next } = await searchParams;
   const configured = isSupabaseConfigured();
+  const { whatsapp } = await getSiteProfile();
 
   return (
     <PublicShell>
@@ -35,7 +37,7 @@ export default async function LoginPage({
 
           <Card className="mt-6 shadow-soft">
             {configured ? (
-              <LoginForm next={next} />
+              <LoginForm next={next} whatsapp={whatsapp} />
             ) : (
               <div className="grid gap-4">
                 <p className="rounded-lg bg-surface-container-low px-4 py-3 text-center text-sm text-on-surface-variant">
@@ -68,7 +70,7 @@ export default async function LoginPage({
           </Card>
 
           {/* In demo mode there are no login tabs, so show the register CTA at page level. */}
-          {!configured ? <RegisterCta /> : null}
+          {!configured ? <RegisterCta whatsapp={whatsapp} /> : null}
         </div>
       </section>
     </PublicShell>

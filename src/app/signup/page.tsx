@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import { PublicShell } from "@/components/public/public-shell";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
-import { siteProfile } from "@/lib/data";
+import { getSiteProfile } from "@/lib/db/settings";
 
 export const metadata: Metadata = {
   title: "Pendaftaran Anggota",
   description: "Informasi pendaftaran anggota Koperasi Agri Mulyo Lestari."
 };
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const siteProfile = await getSiteProfile();
   const waLink = `https://wa.me/${siteProfile.whatsapp.replace(/\D/g, "")}`;
   return (
     <PublicShell>

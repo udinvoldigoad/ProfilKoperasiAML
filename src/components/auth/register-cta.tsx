@@ -1,11 +1,10 @@
 import { MessageCircle } from "lucide-react";
 import { siteProfile } from "@/lib/data";
 
-const waLink = `https://wa.me/${siteProfile.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-  "Halo Admin Koperasi Agri Mulyo Lestari, saya ingin mendaftar sebagai anggota koperasi."
-)}`;
-
-export function RegisterCta() {
+export function RegisterCta({ whatsapp = siteProfile.whatsapp }: { whatsapp?: string }) {
+  const waLink = `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+    "Halo Admin Koperasi Agri Mulyo Lestari, saya ingin mendaftar sebagai anggota koperasi."
+  )}`;
   return (
     <div className="mt-6">
       <div className="flex items-center gap-3">

@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { hardcodedGallery, products, siteProfile } from "@/lib/data";
+import { hardcodedGallery, products } from "@/lib/data";
+import { getSiteProfile } from "@/lib/db/settings";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const siteProfile = await getSiteProfile();
   return (
     <PublicShell>
       {/* HERO */}
