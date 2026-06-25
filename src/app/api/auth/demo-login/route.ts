@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -8,15 +8,21 @@ const COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 8
 };
 
-function safeNext(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
+function safeNext(value: unknown) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return "/";
   return value;
 }
 
-export function GET(request: NextRequest) {
-  const role = request.nextUrl.searchParams.get("role");
-  const next = safeNext(request.nextUrl.searchParams.get("next"));
-  const response = NextResponse.redirect(new URL(next, request.url));
+/**
+ * Demo login is a POST (mutating) action so it is never triggered by Next.js
+ * <Link> prefetching, which would otherwise set a demo session cookie just by
+ * rendering the login page.
+ */
+export async function POST(request: NextRequest) {
+  const form = await request.formData().catch(() => null);
+  const role = form?.get("role");
+  const next = safeNext(form?.get("next"));
+  const response = NextResponse.redirect(new URL(next, request.url), 303);
 
   if (role === "admin") {
     response.cookies.set("aml_admin_demo_session", "1", COOKIE_OPTIONS);
@@ -30,5 +36,5 @@ export function GET(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.redirect(new URL("/login", request.url));
+  return NextResponse.redirect(new URL("/login", request.url), 303);
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Leaf, ShieldCheck, UserRound } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
@@ -42,20 +41,28 @@ export default async function LoginPage({
                 <p className="rounded-lg bg-surface-container-low px-4 py-3 text-center text-sm text-on-surface-variant">
                   Mode demo aktif — Supabase belum dikonfigurasi. Masuk tanpa kredensial untuk menjelajah portal.
                 </p>
-                <Link
-                  href="/api/auth/demo-login?role=admin&next=/admin/dashboard"
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white"
-                >
-                  <ShieldCheck size={18} aria-hidden="true" />
-                  Masuk sebagai Admin (Demo)
-                </Link>
-                <Link
-                  href="/api/auth/demo-login?role=anggota&next=/anggota/dashboard"
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary-container"
-                >
-                  <UserRound size={18} aria-hidden="true" />
-                  Masuk sebagai Anggota (Demo)
-                </Link>
+                <form action="/api/auth/demo-login" method="post">
+                  <input type="hidden" name="role" value="admin" />
+                  <input type="hidden" name="next" value="/admin/dashboard" />
+                  <button
+                    type="submit"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white"
+                  >
+                    <ShieldCheck size={18} aria-hidden="true" />
+                    Masuk sebagai Admin (Demo)
+                  </button>
+                </form>
+                <form action="/api/auth/demo-login" method="post">
+                  <input type="hidden" name="role" value="anggota" />
+                  <input type="hidden" name="next" value="/anggota/dashboard" />
+                  <button
+                    type="submit"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary-container"
+                  >
+                    <UserRound size={18} aria-hidden="true" />
+                    Masuk sebagai Anggota (Demo)
+                  </button>
+                </form>
               </div>
             )}
           </Card>

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, History, Home, Leaf, LogOut, Menu, QrCode, UserRound, X } from "lucide-react";
+import { CalendarDays, History, Home, Leaf, Menu, QrCode, UserRound, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { LogoutForm } from "@/components/auth/logout-form";
 
 const navItems = [
   { href: "/anggota/dashboard", label: "Dashboard", icon: Home },
@@ -73,13 +74,7 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
         })}
       </nav>
       <div className="mt-5 border-t border-border-subtle pt-5">
-        <Link
-          href="/api/auth/logout?next=/login"
-          className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border-subtle text-sm font-bold text-on-surface-variant hover:bg-surface-gray"
-        >
-          <LogOut size={18} aria-hidden="true" />
-          Keluar
-        </Link>
+        <LogoutForm />
       </div>
     </aside>
   );
