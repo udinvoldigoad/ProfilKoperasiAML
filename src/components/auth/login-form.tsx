@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogIn, ShieldCheck, UserRound } from "lucide-react";
+import { AlertTriangle, LogIn, MessageCircle, ShieldCheck, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { RegisterCta } from "@/components/auth/register-cta";
 
 type Mode = "anggota" | "admin";
+
+const MAX_ATTEMPTS = 5;
 
 export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string }) {
   const router = useRouter();
@@ -15,6 +17,12 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failCount, setFailCount] = useState(0);
+  const [showLockModal, setShowLockModal] = useState(false);
+
+  const waLink = `https://wa.me/${(whatsapp ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(
+    "Halo Admin Koperasi Agri Mulyo Lestari, saya tidak bisa masuk dan ingin meminta reset password akun saya."
+  )}`;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,8 +37,14 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
       const data = await response.json();
       if (!response.ok) {
         setError(data.error ?? "Gagal masuk. Coba lagi.");
+        setFailCount((count) => {
+          const nextCount = count + 1;
+          if (nextCount >= MAX_ATTEMPTS) setShowLockModal(true);
+          return nextCount;
+        });
         return;
       }
+      setFailCount(0);
       router.push(data.redirectTo ?? "/");
       router.refresh();
     } catch {
@@ -143,6 +157,46 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
       </button>
     </form>
     {mode === "anggota" ? <RegisterCta whatsapp={whatsapp} /> : null}
+
+    {showLockModal ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+        <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-soft">
+          <div className="flex items-start justify-between">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-error/10 text-error">
+              <AlertTriangle size={24} aria-hidden="true" />
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowLockModal(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-text hover:bg-surface-gray"
+              aria-label="Tutup"
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>
+          <h2 className="mt-4 text-lg font-bold text-primary">Gagal masuk {failCount} kali</h2>
+          <p className="mt-2 text-sm text-on-surface-variant">
+            Jika lupa password, hubungi admin koperasi untuk melakukan reset password akun Anda.
+          </p>
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white transition hover:brightness-105"
+          >
+            <MessageCircle size={18} aria-hidden="true" />
+            Hubungi Admin via WhatsApp
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowLockModal(false)}
+            className="mt-3 flex min-h-11 w-full items-center justify-center rounded-lg border border-border-subtle text-sm font-bold text-on-surface-variant hover:bg-surface-gray"
+          >
+            Coba lagi
+          </button>
+        </div>
+      </div>
+    ) : null}
     </>
   );
 }
