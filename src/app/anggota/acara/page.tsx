@@ -4,9 +4,19 @@ import { Card } from "@/components/ui/card";
 import { listEvents } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
+// Active first, then upcoming (nearest date), then finished (most recent).
+const STATUS_RANK: Record<string, number> = { aktif: 0, draft: 1, selesai: 2, dibatalkan: 3 };
+
 export default async function AnggotaAcaraPage() {
   // Members see upcoming (draft), ongoing (aktif), and past (selesai) events — never cancelled ones.
-  const events = (await listEvents()).filter((event) => event.status !== "dibatalkan");
+  const events = (await listEvents())
+    .filter((event) => event.status !== "dibatalkan")
+    .sort((a, b) => {
+      const rank = (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9);
+      if (rank !== 0) return rank;
+      // Upcoming: nearest date first; otherwise newest first.
+      return a.status === "draft" ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+    });
 
   return (
     <div className="grid gap-6">

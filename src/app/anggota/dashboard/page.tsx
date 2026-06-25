@@ -13,8 +13,10 @@ export default async function AnggotaDashboardPage() {
   const member = session?.member ? await getMemberForSession(session.member.id) : null;
   const events = await listEvents();
   // Highlight the event happening now, otherwise the soonest upcoming one.
+  const activeEvent = events.find((event) => event.status === "aktif") ?? null;
   const upcoming = events.filter((event) => event.status === "draft").sort((a, b) => a.date.localeCompare(b.date));
-  const nextEvent = events.find((event) => event.status === "aktif") ?? upcoming[0] ?? null;
+  const nextEvent = activeEvent ?? upcoming[0] ?? null;
+  const hasActiveEvent = Boolean(activeEvent);
   const memberAttendances = member ? (await listMemberAttendances(member.id)).slice(0, 3) : [];
 
   return (
@@ -70,10 +72,12 @@ export default async function AnggotaDashboardPage() {
           <div className="relative flex items-start justify-between">
             <span className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 sm:h-12 sm:w-12">
               <QrCode size={22} aria-hidden="true" />
-              <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
-              </span>
+              {hasActiveEvent ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3" title="Ada acara aktif">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-white" />
+                </span>
+              ) : null}
             </span>
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/25 text-white transition-all group-hover:bg-white group-hover:text-secondary">
               <ArrowUpRight size={16} aria-hidden="true" />
