@@ -30,14 +30,25 @@ function PersonCard({ person, lead = false }: { person: BoardMember; lead?: bool
         lead ? "border-primary-container" : "border-border-subtle"
       )}
     >
-      <div
-        className={cn(
-          "mx-auto flex h-16 w-16 items-center justify-center rounded-full text-lg font-extrabold text-white",
-          lead ? "bg-primary-container" : "bg-secondary-container"
-        )}
-      >
-        {initials(person.name)}
-      </div>
+      {person.photoUrl ? (
+        <img
+          src={person.photoUrl}
+          alt={person.name}
+          className={cn(
+            "mx-auto h-16 w-16 rounded-full border-2 object-cover",
+            lead ? "border-primary-container" : "border-secondary-container"
+          )}
+        />
+      ) : (
+        <div
+          className={cn(
+            "mx-auto flex h-16 w-16 items-center justify-center rounded-full text-lg font-extrabold text-white",
+            lead ? "bg-primary-container" : "bg-secondary-container"
+          )}
+        >
+          {initials(person.name)}
+        </div>
+      )}
       <h3 className="mt-3 text-lg font-bold text-primary">{person.name}</h3>
       <p className="font-bold text-secondary">{person.position}</p>
       {person.period ? <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted-text">{person.period}</p> : null}
