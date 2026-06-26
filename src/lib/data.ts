@@ -12,6 +12,40 @@ import type {
 } from "@/types";
 import { eventEndToUtc } from "@/lib/utils";
 
+const WIB_TIMEZONE = "Asia/Jakarta";
+
+function dateInWib(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: WIB_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  })
+    .formatToParts(now)
+    .reduce<Record<string, string>>((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function getDemoScanEvent(now = new Date()): Event {
+  const date = dateInWib(now);
+  return {
+    id: "e-demo-scan",
+    title: "Simulasi Presensi QR Hari Ini",
+    date,
+    startTime: "00:00",
+    endTime: "23:59",
+    location: "Balai Desa Giri Mulyo",
+    description: "Acara demo khusus presentasi. QR selalu aktif pada hari berjalan agar alur scan bisa diuji tanpa menyimpan data.",
+    status: "aktif",
+    qrToken: "demo-presensi-hari-ini",
+    qrExpiresAt: eventEndToUtc(date, "23:59")
+  };
+}
+
 export const siteProfile = {
   name: "Koperasi Agro Mulyo Lestari",
   shortName: "Koperasi AML",
@@ -133,6 +167,10 @@ export const events: Event[] = [
   }
 ];
 
+export function getDemoEvents(now = new Date()): Event[] {
+  return [getDemoScanEvent(now), ...events];
+}
+
 export const attendances: Attendance[] = [
   { id: "a-001", eventId: "e-003", memberId: "m-001", attendedAt: "2026-06-16T06:18:00.000Z", method: "qr_code" },
   { id: "a-002", eventId: "e-003", memberId: "m-002", attendedAt: "2026-06-16T06:21:00.000Z", method: "manual" },
@@ -173,7 +211,7 @@ export const products: Product[] = [
     id: "pr-004",
     title: "Gudang Distribusi Pertanian Alpukat",
     description: "Pengumpulan, penyortiran, dan distribusi hasil panen alpukat ke mitra pasar.",
-    imageUrl: "/images/rapat-koperasi.png",
+    imageUrl: "/images/gudang alpukat.jpeg",
     category: "Distribusi",
     status: "aktif"
   }
@@ -370,7 +408,7 @@ export function getPostBySlug(slug: string) {
 }
 
 export function getEventById(id: string) {
-  return events.find((event) => event.id === id);
+  return getDemoEvents().find((event) => event.id === id);
 }
 
 export function getMemberById(id: string) {

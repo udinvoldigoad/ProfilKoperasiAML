@@ -1,7 +1,7 @@
 import type { Event, EventStatus } from "@/types";
 import {
   attendances as demoAttendances,
-  events as demoEvents,
+  getDemoEvents,
   members as demoMembers
 } from "@/lib/data";
 import { eventEndToUtc, resolveEventStatus } from "@/lib/utils";
@@ -52,7 +52,7 @@ function resolveDemoStatus(event: Event): Event {
 }
 
 function demoEventsResolved(): Event[] {
-  return demoEvents.map(resolveDemoStatus);
+  return getDemoEvents().map(resolveDemoStatus);
 }
 
 /** All events (admin view, includes draft/selesai), newest date first. */
@@ -75,13 +75,13 @@ export async function listEvents(): Promise<Event[]> {
 /** Single event by id (admin/service role). */
 export async function getEvent(id: string): Promise<Event | null> {
   if (!isSupabaseConfigured()) {
-    const found = demoEvents.find((event) => event.id === id);
+    const found = getDemoEvents().find((event) => event.id === id);
     return found ? resolveDemoStatus(found) : null;
   }
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    const found = demoEvents.find((event) => event.id === id);
+    const found = getDemoEvents().find((event) => event.id === id);
     return found ? resolveDemoStatus(found) : null;
   }
 

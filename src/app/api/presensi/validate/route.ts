@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { attendances, events } from "@/lib/data";
+import { attendances, getDemoEvents } from "@/lib/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { parseQrToken, resolveEventStatus } from "@/lib/utils";
 
@@ -31,7 +31,7 @@ function isExpired(value: string | null) {
 }
 
 function validateDemoAttendance(token: string, memberId: string) {
-  const event = events.find((item) => item.qrToken === token);
+  const event = getDemoEvents().find((item) => item.qrToken === token);
 
   if (!event) {
     return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
