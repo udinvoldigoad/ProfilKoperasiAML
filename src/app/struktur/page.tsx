@@ -172,9 +172,9 @@ export default function StrukturPage() {
           <div className="mx-auto mt-14 max-w-4xl border-t border-border-subtle pt-10">
             <p className="text-center text-sm font-bold text-secondary">Pengawas</p>
             <h3 className="mt-1 text-center text-xl font-bold text-primary">Dewan Pengawas Koperasi</h3>
-            <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-5">
+            <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-4">
               {pengawas.map((person) => (
-                <div key={person.id} className="flex justify-center">
+                <div key={person.id} className="flex basis-[30%] justify-center lg:basis-[17%]">
                   <PersonCard person={person} />
                 </div>
               ))}
