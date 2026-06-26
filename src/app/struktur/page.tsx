@@ -101,9 +101,14 @@ export default function StrukturPage() {
   // Hardcoded org chart (edit in src/lib/data.ts → boardMembers).
   const sorted = [...boardMembers].sort((a, b) => a.level - b.level || a.sortOrder - b.sortOrder);
 
-  // Group members into chart rows by level (1 = top), preserving sort order within a row.
+  // Pengawas is a separate organ — render it as its own grid, not inside the org chart.
+  const isPengawas = (person: BoardMember) => /pengawas/i.test(person.position);
+  const pengawas = sorted.filter(isPengawas);
+  const pengurus = sorted.filter((person) => !isPengawas(person));
+
+  // Group pengurus into chart rows by level (1 = top), preserving sort order within a row.
   const byLevel = new Map<number, BoardMember[]>();
-  for (const person of sorted) {
+  for (const person of pengurus) {
     const level = person.level ?? 2;
     const row = byLevel.get(level) ?? [];
     row.push(person);
@@ -156,6 +161,20 @@ export default function StrukturPage() {
 
           {rows.length === 0 ? <p className="text-on-surface-variant">Belum ada data pengurus.</p> : null}
         </div>
+
+        {pengawas.length > 0 ? (
+          <div className="mx-auto mt-14 max-w-4xl border-t border-border-subtle pt-10">
+            <p className="text-center text-sm font-bold text-secondary">Pengawas</p>
+            <h3 className="mt-1 text-center text-xl font-bold text-primary">Dewan Pengawas Koperasi</h3>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+              {pengawas.map((person) => (
+                <div key={person.id} className="flex justify-center">
+                  <PersonCard person={person} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
     </PublicShell>
   );
