@@ -95,7 +95,7 @@ export default async function AdminDashboardPage() {
           <div className="mt-5 grid gap-4">
             {upcomingEvents.length > 0 ? (
               upcomingEvents.map((event) => (
-                <Link key={event.id} href={`/admin/acara/${event.id}`} className="rounded-2xl border border-border-subtle bg-white p-4 hover:border-primary">
+                <Link key={event.id} href={`/admin/acara/${event.id}`} className="rounded-2xl border border-border-subtle bg-white p-4 transition duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-soft">
                   <Badge tone={event.status === "aktif" ? "success" : "warning"}>{event.status}</Badge>
                   <h3 className="mt-3 font-bold text-primary">{event.title}</h3>
                   <p className="text-sm text-on-surface-variant">{formatDateID(event.date)} di {event.location}</p>

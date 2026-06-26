@@ -68,7 +68,7 @@ export default function UnitPage() {
               {group.points.length > 0 ? (
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {group.points.map((pt) => (
-                    <Card key={pt.id} className="flex flex-col">
+                    <Card key={pt.id} className="flex flex-col transition duration-200 hover:-translate-y-1 hover:shadow-soft">
                       <h3 className="text-lg font-bold text-primary">{pt.name}</h3>
                       <p className="mt-2 flex items-start gap-2 text-sm text-on-surface-variant">
                         <MapPin size={16} className="mt-0.5 shrink-0 text-secondary" aria-hidden="true" />

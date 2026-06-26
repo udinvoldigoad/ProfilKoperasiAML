@@ -4,6 +4,7 @@ import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { hardcodedGallery, products } from "@/lib/data";
 import { getSiteProfile } from "@/lib/db/settings";
@@ -110,7 +111,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="container-page mt-12 grid gap-6 md:grid-cols-3">
+        <Reveal className="container-page mt-12 grid gap-6 md:grid-cols-3">
           <Card>
             <h3 className="text-xl font-bold text-primary">Visi</h3>
             <p className="mt-3 text-on-surface-variant">
@@ -129,7 +130,7 @@ export default async function HomePage() {
               Gotong royong, keterbukaan, keberlanjutan, dan pelayanan yang ramah bagi semua anggota.
             </p>
           </Card>
-        </div>
+        </Reveal>
       </section>
 
       {/* PRODUK */}
@@ -140,9 +141,12 @@ export default async function HomePage() {
             title="Layanan koperasi yang dekat dengan kebutuhan warga"
             description="Mulai dari simpan pinjam, penyediaan sarana pertanian, hingga distribusi hasil panen anggota."
           />
-          <div className="mt-8 grid gap-5 sm:grid-cols-3">
+          <Reveal className="mt-8 grid gap-5 sm:grid-cols-3">
             {products.map((product) => (
-              <Card key={product.id} className="flex flex-col overflow-hidden p-0">
+              <Card
+                key={product.id}
+                className="flex flex-col overflow-hidden p-0 transition duration-200 hover:-translate-y-1 hover:shadow-soft"
+              >
                 <img src={product.imageUrl} alt={product.title} className="h-40 w-full object-cover sm:h-44" />
                 <div className="flex flex-1 flex-col p-5">
                   <Badge tone="secondary">{product.category}</Badge>
@@ -151,7 +155,7 @@ export default async function HomePage() {
                 </div>
               </Card>
             ))}
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -163,7 +167,7 @@ export default async function HomePage() {
             title="Dokumentasi kegiatan dan potensi desa"
             description="Sekilas potret kegiatan koperasi dan potensi pertanian Desa Giri Mulyo."
           />
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          <Reveal className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             {hardcodedGallery.map((item) => (
               <figure key={item.id} className="group relative overflow-hidden rounded-2xl border border-border-subtle">
                 <img
@@ -180,7 +184,7 @@ export default async function HomePage() {
                 </figcaption>
               </figure>
             ))}
-          </div>
+          </Reveal>
           <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-border-subtle bg-surface-gray p-8 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
               <h3 className="text-xl font-bold text-primary">Ingin mengenal unit usaha kami?</h3>
