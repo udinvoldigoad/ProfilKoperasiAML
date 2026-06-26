@@ -3,6 +3,7 @@ import { CalendarPlus } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { listEvents } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
@@ -55,9 +56,7 @@ export default async function AdminAcaraPage() {
             </Card>
           ))
         ) : (
-          <Card>
-            <p className="text-on-surface-variant">Belum ada acara. Klik <strong>Buat Acara</strong> untuk menambahkan.</p>
-          </Card>
+          <EmptyState icon={CalendarPlus} title="Belum ada acara" description="Klik Buat Acara untuk menambahkan acara pertama." />
         )}
       </div>
     </div>

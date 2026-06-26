@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -71,6 +71,15 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Scroll cue */}
+        <Link
+          href="#tentang"
+          aria-label="Lihat selengkapnya"
+          className="absolute bottom-5 left-1/2 z-10 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25"
+        >
+          <ChevronDown size={22} className="animate-bounce" aria-hidden="true" />
+        </Link>
       </section>
 
       {/* TENTANG */}

@@ -4,6 +4,7 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import { AnnouncementActions } from "@/components/admin/announcement-actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { listAnnouncements } from "@/lib/db/announcements";
 import { formatDateID } from "@/lib/utils";
 
@@ -39,9 +40,7 @@ export default async function AdminPengumumanPage() {
             </Card>
           ))
         ) : (
-          <Card>
-            <p className="text-on-surface-variant">Belum ada pengumuman. Klik <strong>Tambah Pengumuman</strong> untuk menambahkan.</p>
-          </Card>
+          <EmptyState icon={Megaphone} title="Belum ada pengumuman" description="Klik Tambah Pengumuman untuk membuat yang pertama." />
         )}
       </div>
     </div>

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { listEvents } from "@/lib/db/events";
 import { formatDateID } from "@/lib/utils";
 
@@ -41,9 +43,7 @@ export default async function AnggotaAcaraPage() {
             </Card>
           ))
         ) : (
-          <Card>
-            <p className="text-on-surface-variant">Belum ada acara terjadwal.</p>
-          </Card>
+          <EmptyState icon={CalendarDays} title="Belum ada acara" description="Acara koperasi yang akan datang muncul di sini." />
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Megaphone, Pin } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { listAnnouncements } from "@/lib/db/announcements";
 import { formatDateID } from "@/lib/utils";
@@ -57,9 +58,7 @@ export default async function PengumumanPage() {
               </Card>
             ))
           ) : (
-            <Card>
-              <p className="text-on-surface-variant">Belum ada pengumuman saat ini.</p>
-            </Card>
+            <EmptyState icon={Megaphone} title="Belum ada pengumuman" description="Pengumuman resmi koperasi akan tampil di sini." />
           )}
         </div>
       </section>
