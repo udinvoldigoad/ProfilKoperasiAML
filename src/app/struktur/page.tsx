@@ -69,27 +69,33 @@ function ChartConnector({ parentCount, childCount }: { parentCount: number; chil
   const left = Math.min(...points);
   const right = Math.max(...points);
 
+  // A wrapping child row (>2 cards on mobile) can't line up with a precise bus,
+  // so it falls back to a single trunk on mobile. Rows of ≤2 branch on all sizes.
+  const wraps = childCount > 2;
+  const lineClass = wraps ? "hidden sm:block" : "block";
+
   return (
     <div className="relative h-8 w-full max-w-4xl sm:h-10" aria-hidden="true">
-      {/* Mobile: a single centered trunk (rows may wrap, so a precise bus would not line up). */}
-      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary-container/40 sm:hidden" />
+      {wraps ? (
+        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary-container/40 sm:hidden" />
+      ) : null}
 
-      {/* Desktop: precise org-chart bus + parent drops + child risers. */}
+      {/* Shared horizontal bus + parent drops + child risers (the branch). */}
       <div
-        className="absolute top-1/2 hidden h-px -translate-y-1/2 bg-primary-container/40 sm:block"
+        className={cn("absolute top-1/2 h-px -translate-y-1/2 bg-primary-container/40", lineClass)}
         style={{ left: `${left}%`, right: `${100 - right}%` }}
       />
       {parents.map((position, i) => (
         <div
           key={`p-${i}`}
-          className="absolute top-0 hidden h-1/2 w-px -translate-x-1/2 bg-primary-container/40 sm:block"
+          className={cn("absolute top-0 h-1/2 w-px -translate-x-1/2 bg-primary-container/40", lineClass)}
           style={{ left: `${position}%` }}
         />
       ))}
       {children.map((position, i) => (
         <div
           key={`c-${i}`}
-          className="absolute bottom-0 hidden h-1/2 w-px -translate-x-1/2 bg-primary-container/40 sm:block"
+          className={cn("absolute bottom-0 h-1/2 w-px -translate-x-1/2 bg-primary-container/40", lineClass)}
           style={{ left: `${position}%` }}
         />
       ))}
