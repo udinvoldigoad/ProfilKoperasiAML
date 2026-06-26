@@ -71,24 +71,25 @@ function ChartConnector({ parentCount, childCount }: { parentCount: number; chil
 
   return (
     <div className="relative h-8 w-full max-w-4xl sm:h-10" aria-hidden="true">
-      {/* Shared horizontal bus at mid-height. */}
+      {/* Mobile: a single centered trunk (rows may wrap, so a precise bus would not line up). */}
+      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-primary-container/40 sm:hidden" />
+
+      {/* Desktop: precise org-chart bus + parent drops + child risers. */}
       <div
-        className="absolute top-1/2 h-px -translate-y-1/2 bg-primary-container/40"
+        className="absolute top-1/2 hidden h-px -translate-y-1/2 bg-primary-container/40 sm:block"
         style={{ left: `${left}%`, right: `${100 - right}%` }}
       />
-      {/* Parent drops (top half). */}
       {parents.map((position, i) => (
         <div
           key={`p-${i}`}
-          className="absolute top-0 h-1/2 w-px -translate-x-1/2 bg-primary-container/40"
+          className="absolute top-0 hidden h-1/2 w-px -translate-x-1/2 bg-primary-container/40 sm:block"
           style={{ left: `${position}%` }}
         />
       ))}
-      {/* Child risers (bottom half). */}
       {children.map((position, i) => (
         <div
           key={`c-${i}`}
-          className="absolute bottom-0 h-1/2 w-px -translate-x-1/2 bg-primary-container/40"
+          className="absolute bottom-0 hidden h-1/2 w-px -translate-x-1/2 bg-primary-container/40 sm:block"
           style={{ left: `${position}%` }}
         />
       ))}
@@ -121,22 +122,37 @@ export default function StrukturPage() {
         />
 
         <div className="mt-10 flex flex-col items-center sm:mt-12">
-          {rows.map((members, rowIndex) => (
-            <Fragment key={rowIndex}>
-              {/* Cards row (horizontal on every screen size; cards shrink on mobile). */}
-              <div className="flex w-full max-w-4xl items-start justify-center">
-                {members.map((person) => (
-                  <div key={person.id} className="flex min-w-0 flex-1 justify-center px-0.5 sm:px-2">
-                    <PersonCard person={person} lead={rowIndex === 0} />
-                  </div>
-                ))}
-              </div>
-              {/* Connector down to the next row. */}
-              {rowIndex < rows.length - 1 ? (
-                <ChartConnector parentCount={members.length} childCount={rows[rowIndex + 1].length} />
-              ) : null}
-            </Fragment>
-          ))}
+          {rows.map((members, rowIndex) => {
+            // Many cards in one row are cramped on phones — wrap to 2 per line on mobile,
+            // but keep them on a single line (org-chart style) from sm upward.
+            const wrap = members.length > 2;
+            return (
+              <Fragment key={rowIndex}>
+                <div
+                  className={cn(
+                    "flex w-full max-w-4xl items-start justify-center",
+                    wrap ? "flex-wrap gap-y-4 sm:flex-nowrap sm:gap-y-0" : ""
+                  )}
+                >
+                  {members.map((person) => (
+                    <div
+                      key={person.id}
+                      className={cn(
+                        "flex min-w-0 justify-center px-1 sm:flex-1 sm:px-2",
+                        wrap ? "basis-1/2" : "flex-1"
+                      )}
+                    >
+                      <PersonCard person={person} lead={rowIndex === 0} />
+                    </div>
+                  ))}
+                </div>
+                {/* Connector down to the next row. */}
+                {rowIndex < rows.length - 1 ? (
+                  <ChartConnector parentCount={members.length} childCount={rows[rowIndex + 1].length} />
+                ) : null}
+              </Fragment>
+            );
+          })}
 
           {rows.length === 0 ? <p className="text-on-surface-variant">Belum ada data pengurus.</p> : null}
         </div>
