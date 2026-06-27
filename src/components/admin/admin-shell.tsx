@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,24 +6,24 @@ import {
   CalendarDays,
   FileSpreadsheet,
   History,
-  Images,
   LayoutDashboard,
   Megaphone,
   Menu,
   Settings,
+  UserRound,
   Users,
   X
 } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/anggota/theme-toggle";
 import { LogoutForm } from "@/components/auth/logout-form";
+import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/anggota", label: "Anggota", icon: Users },
   { href: "/admin/acara", label: "Acara", icon: CalendarDays },
   { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
-  { href: "/admin/galeri", label: "Galeri", icon: Images },
   { href: "/admin/laporan", label: "Laporan", icon: FileSpreadsheet },
   { href: "/admin/audit-log", label: "Audit Log", icon: History },
   { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings }
@@ -93,11 +93,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-muted-text">Mode demo lokal, Supabase-ready</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-border-subtle bg-white py-1 pl-1 pr-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-sm font-bold text-white">
-                AU
-              </span>
-              <span className="hidden text-sm font-bold text-primary sm:inline">Admin Utama</span>
+
+            <div className="lg:hidden">
+              <ThemeToggle compact />
+            </div>
+            <div className="hidden items-center gap-3 lg:flex">
+              <ThemeToggle />
+              <div className="flex items-center gap-3 rounded-full border border-border-subtle bg-white py-1 pl-1 pr-4">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-white">
+                  <UserRound size={19} strokeWidth={2.4} aria-hidden="true" />
+                </span>
+                <span className="text-sm font-bold text-primary">Admin Utama</span>
+              </div>
             </div>
           </div>
         </header>
@@ -106,4 +113,3 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

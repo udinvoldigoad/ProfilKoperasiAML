@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Save } from "lucide-react";
+import { CheckCircle2, Save, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -27,15 +27,6 @@ const FIELDS: Array<{ key: keyof ProfilFormState; label: string; placeholder: st
   { key: "phone", label: "No HP", placeholder: "08xxxxxxxxxx" },
   { key: "address", label: "Alamat", placeholder: "Alamat lengkap", required: true }
 ];
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function ProfilForm({ initial, info }: { initial: ProfilFormState; info: ReadOnlyInfo }) {
   const router = useRouter();
@@ -79,11 +70,11 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormState; info: 
   return (
     <>
       <Card>
-        <div className="flex flex-col gap-6 md:flex-row">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl bg-primary-container text-3xl font-extrabold text-white">
-            {initials(form.fullName) || "AN"}
+        <div className="flex flex-col items-center gap-6 text-center md:flex-row md:items-start md:text-left">
+          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl bg-primary-container text-white">
+            <UserRound size={54} strokeWidth={2.3} aria-hidden="true" />
           </div>
-          <div className="flex-1">
+          <div className="w-full flex-1">
             <div className="grid gap-3 sm:grid-cols-3">
               {[
                 ["No Anggota", info.memberNumber],

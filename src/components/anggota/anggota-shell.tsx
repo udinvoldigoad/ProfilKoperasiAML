@@ -6,6 +6,7 @@ import { CalendarDays, History, Home, Menu, QrCode, UserRound, X } from "lucide-
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LogoutForm } from "@/components/auth/logout-form";
+import { ThemeToggle } from "@/components/anggota/theme-toggle";
 
 const navItems = [
   { href: "/anggota/dashboard", label: "Dashboard", icon: Home },
@@ -19,12 +20,10 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Close the drawer whenever the route changes (e.g. tapping a nav link).
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // Lock background scroll while the mobile drawer is open.
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
@@ -102,11 +101,18 @@ export function AnggotaShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-muted-text">Portal Anggota</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-border-subtle bg-white py-1 pl-1 pr-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-sm font-bold text-white">
-                AN
-              </span>
-              <span className="hidden text-sm font-bold text-primary sm:inline">Anggota</span>
+
+            <div className="lg:hidden">
+              <ThemeToggle compact />
+            </div>
+            <div className="hidden items-center gap-3 lg:flex">
+              <ThemeToggle />
+              <div className="flex items-center gap-3 rounded-full border border-border-subtle bg-white py-1 pl-1 pr-4">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-container text-white">
+                  <UserRound size={19} strokeWidth={2.4} aria-hidden="true" />
+                </span>
+                <span className="text-sm font-bold text-primary">Anggota</span>
+              </div>
             </div>
           </div>
         </header>
