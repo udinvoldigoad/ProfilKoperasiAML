@@ -71,15 +71,6 @@ export function normalizePhone(value: string) {
   return value;
 }
 
-export function toCsv(rows: Array<Record<string, string | number | undefined | null>>) {
-  if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
-  const escape = (value: string | number | undefined | null) => {
-    const text = value == null ? "" : String(value);
-    return `"${text.replace(/"/g, '""')}"`;
-  };
-  return [headers.join(","), ...rows.map((row) => headers.map((header) => escape(row[header])).join(","))].join("\n");
-}
 
 export function parseQrToken(raw: string) {
   try {

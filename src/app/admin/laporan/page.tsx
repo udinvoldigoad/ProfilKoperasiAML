@@ -19,7 +19,6 @@ export default async function AdminLaporanPage() {
     tipe: member.memberType
   }));
 
-  // Real attendance recap per event (active members + their hadir/tidak hadir status).
   const eventReports = await Promise.all(
     events.map(async (event) => {
       const rows = await getEventAttendanceRows(event.id);
@@ -28,7 +27,7 @@ export default async function AdminLaporanPage() {
         event,
         present,
         total: rows.length,
-        csvRows: rows.map((row) => ({
+        excelRows: rows.map((row) => ({
           acara: event.title,
           tanggal: event.date,
           no_anggota: row.memberNumber,
@@ -59,7 +58,7 @@ export default async function AdminLaporanPage() {
 
   return (
     <div className="mx-auto max-w-container">
-      <AdminPageHeader title="Laporan dan Export" description="Export data anggota dan rekap presensi dalam format CSV atau PDF." />
+      <AdminPageHeader title="Laporan dan Export" description="Export data anggota dan rekap presensi dalam format Excel atau PDF." />
 
       <Card className="mb-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
         <div>
@@ -75,24 +74,24 @@ export default async function AdminLaporanPage() {
         <div>
           <h2 className="text-xl font-bold text-primary">Data Anggota</h2>
           <p className="mt-2 text-sm text-on-surface-variant">
-            {members.length} anggota — CSV berisi no anggota, nama, NIK, alamat, status, dan tipe.
+            {members.length} anggota - Excel berisi no anggota, nama, NIK, alamat, status, dan tipe.
           </p>
         </div>
-        <ExportButton filename="anggota-aml.csv" rows={memberRows} label="Export Anggota" />
+        <ExportButton filename="anggota-aml.xlsx" rows={memberRows} label="Export Anggota" />
       </Card>
 
       <h2 className="mb-3 text-lg font-bold text-primary">Rekap Presensi per Acara</h2>
       <div className="grid gap-4">
         {eventReports.length > 0 ? (
-          eventReports.map(({ event, present, total, csvRows }) => (
+          eventReports.map(({ event, present, total, excelRows }) => (
             <Card key={event.id} className="grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
               <div>
                 <h3 className="text-lg font-bold text-primary">{event.title}</h3>
                 <p className="mt-1 text-sm text-on-surface-variant">
-                  {formatDateID(event.date)} — {present}/{total} hadir
+                  {formatDateID(event.date)} - {present}/{total} hadir
                 </p>
               </div>
-              <ExportButton filename={`presensi-${event.date}-${event.id}.csv`} rows={csvRows} label="Export Presensi" />
+              <ExportButton filename={`presensi-${event.date}-${event.id}.xlsx`} rows={excelRows} label="Export Presensi" />
             </Card>
           ))
         ) : (

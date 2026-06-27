@@ -65,11 +65,11 @@ export function MemberActions({ memberId }: { memberId: string }) {
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap gap-3">
+    <div className="grid w-full gap-3 md:min-w-[34rem]">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Link
           href={`/admin/anggota/${memberId}/edit`}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
         >
           <Pencil size={18} aria-hidden="true" />
           Edit
@@ -78,7 +78,7 @@ export function MemberActions({ memberId }: { memberId: string }) {
           type="button"
           onClick={handleReset}
           disabled={busy !== null}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white disabled:opacity-60"
         >
           <KeyRound size={18} aria-hidden="true" />
           {busy === "reset" ? "Memproses..." : "Reset Password"}
@@ -87,7 +87,7 @@ export function MemberActions({ memberId }: { memberId: string }) {
           type="button"
           onClick={handleDelete}
           disabled={busy !== null}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-error/40 bg-white px-4 text-sm font-bold text-error disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-error/40 bg-white px-4 text-sm font-bold text-error disabled:opacity-60"
         >
           <Trash2 size={18} aria-hidden="true" />
           {busy === "delete" ? "Memproses..." : "Nonaktifkan"}

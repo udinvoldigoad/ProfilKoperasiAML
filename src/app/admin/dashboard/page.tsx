@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { CalendarDays, FileUp, Megaphone, UserPlus } from "lucide-react";
+import { BarChart3, CalendarDays, UserPlus } from "lucide-react";
+import { AttendanceChartList } from "@/components/admin/attendance-chart-list";
 import { AdminPageHeader } from "@/components/admin/page-header";
+import { RecentMembersTable } from "@/components/admin/recent-members-table";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { listMembers } from "@/lib/db/members";
-import { listEvents } from "@/lib/db/events";
+import { getEventAttendanceRows, listEvents } from "@/lib/db/events";
 import { countAttendancesThisMonth } from "@/lib/db/attendances";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { formatDateID } from "@/lib/utils";
 
 export default async function AdminDashboardPage() {
@@ -19,16 +20,27 @@ export default async function AdminDashboardPage() {
   const activeMembers = members.filter((member) => member.status === "aktif").length;
   const activeEvents = events.filter((event) => event.status === "aktif").length;
 
-  // Same ordering as the member dashboard: active first, then nearest upcoming.
   const STATUS_RANK: Record<string, number> = { aktif: 0, draft: 1, selesai: 2, dibatalkan: 3 };
   const upcomingEvents = events
     .filter((event) => event.status !== "selesai" && event.status !== "dibatalkan")
     .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) || a.date.localeCompare(b.date))
     .slice(0, 3);
 
-  const recentMembers = [...members]
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  const recentMembers = [...members].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  const chartEvents = [...events]
+    .filter((event) => event.status !== "draft" && event.status !== "dibatalkan")
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 5);
+  const attendanceChart = await Promise.all(
+    chartEvents.map(async (event) => {
+      const rows = await getEventAttendanceRows(event.id);
+      const attended = rows.filter((row) => Boolean(row.attendedAt)).length;
+      const total = rows.length || activeMembers;
+      const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
+      return { event, attended, total, percent };
+    })
+  );
 
   const stats: Array<[string, string | number, string]> = [
     ["Total Anggota", members.length, "Terdaftar di koperasi"],
@@ -70,24 +82,12 @@ export default async function AdminDashboardPage() {
         <Card>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-xl font-bold text-primary">Aksi Cepat</h2>
-              <p className="text-sm text-on-surface-variant">Jalur paling sering dipakai operator desa.</p>
+              <h2 className="text-xl font-bold text-primary">Grafik Kehadiran per Acara</h2>
+              <p className="text-sm text-on-surface-variant">Jumlah hadir dibanding anggota aktif pada tiap acara.</p>
             </div>
-            {!isSupabaseConfigured() ? <Badge tone="secondary">Mode demo lokal</Badge> : null}
+            <BarChart3 size={28} className="text-secondary" aria-hidden="true" />
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {[
-              ["/admin/anggota/import", "Import Excel Anggota", FileUp],
-              ["/admin/laporan", "Export Laporan", FileUp],
-              ["/admin/pengumuman", "Kelola Pengumuman", Megaphone],
-              ["/admin/acara", "Kelola Acara", CalendarDays]
-            ].map(([href, label, Icon]) => (
-              <Link key={String(href)} href={String(href)} className="flex min-h-16 items-center gap-3 rounded-2xl border border-border-subtle bg-surface-gray px-4 font-bold text-primary hover:bg-surface-container-low">
-                <Icon size={22} aria-hidden="true" />
-                {String(label)}
-              </Link>
-            ))}
-          </div>
+          <AttendanceChartList items={attendanceChart} />
         </Card>
 
         <Card>
@@ -112,38 +112,7 @@ export default async function AdminDashboardPage() {
 
       <Card className="mt-6">
         <h2 className="text-xl font-bold text-primary">Anggota Terbaru</h2>
-        <div className="mt-5 overflow-x-auto table-scroll">
-          <table className="w-full min-w-[640px] text-left">
-            <thead className="bg-surface-gray text-sm text-on-surface-variant">
-              <tr>
-                <th className="px-4 py-3">No Anggota</th>
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Bergabung</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle">
-              {recentMembers.length > 0 ? (
-                recentMembers.map((member) => (
-                  <tr key={member.id}>
-                    <td className="px-4 py-4 font-bold text-primary">{member.memberNumber}</td>
-                    <td className="px-4 py-4">{member.fullName}</td>
-                    <td className="px-4 py-4">
-                      <Badge tone={member.status === "aktif" ? "success" : "neutral"}>{member.status}</Badge>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-muted-text">{formatDateID(member.createdAt)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-on-surface-variant">
-                    Belum ada anggota terdaftar.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <RecentMembersTable members={recentMembers} />
       </Card>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Search, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -169,7 +169,11 @@ export function AnggotaTable({ members }: { members: Member[] }) {
                   </td>
                   <td className="px-5 py-4">{member.memberType === "anggota_baru" ? "Baru" : "Lama"}</td>
                   <td className="px-5 py-4">
-                    <Link className="font-bold text-primary hover:underline" href={`/admin/anggota/${member.id}`}>
+                    <Link
+                      className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg bg-primary-container px-3 text-xs font-extrabold text-white shadow-sm transition hover:bg-teal-dark"
+                      href={`/admin/anggota/${member.id}`}
+                    >
+                      <Eye size={15} aria-hidden="true" />
                       Detail
                     </Link>
                   </td>

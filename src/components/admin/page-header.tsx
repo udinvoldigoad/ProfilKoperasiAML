@@ -10,7 +10,6 @@ const TOP_LEVEL = new Set<string>([
   "/admin/anggota",
   "/admin/acara",
   "/admin/pengumuman",
-  "/admin/galeri",
   "/admin/laporan",
   "/admin/audit-log",
   "/admin/pengaturan"
