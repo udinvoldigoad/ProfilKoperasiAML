@@ -1,16 +1,9 @@
-import type { Metadata } from "next";
-import { PublicShell } from "@/components/public/public-shell";
 import { UnitDetailCards } from "@/components/public/unit-detail-cards";
 import { UnitsMap, type MapLegendItem, type MapPoint } from "@/components/public/units-map";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { unitGroups } from "@/lib/data";
-
-export const metadata: Metadata = {
-  title: "Unit Koperasi",
-  description: "Unit usaha Koperasi Agro Mulyo Lestari beserta titik lokasinya pada peta."
-};
 
 const CATEGORY_COLOR: Record<string, string> = {
   Saprotan: "#065366",
@@ -36,7 +29,7 @@ function categoryColor(category: string) {
   return CATEGORY_COLOR[category] ?? "#065366";
 }
 
-export default function UnitPage() {
+export function ProfileUnitsSection() {
   const unitPoints: MapPoint[] = unitGroups.flatMap((group) =>
     group.points.map((pt) => ({
       id: pt.id,
@@ -69,17 +62,17 @@ export default function UnitPage() {
   ];
 
   return (
-    <PublicShell>
-      <section className="container-page py-12 sm:py-16">
+    <section id="unit" className="scroll-mt-24 bg-white py-16 sm:py-20">
+      <div className="container-page">
         <SectionHeading
           eyebrow="Unit Koperasi"
           title="Peta unit usaha koperasi"
-          description="Peta interaktif untuk melihat posisi Saprotan, Gudang Alpukat, dan patokan desa dalam satu tampilan."
+          description="Peta interaktif untuk melihat posisi Saprotan, Gudang Alpukat, Jual Beli Bibit, dan Balai Desa dalam satu tampilan."
         />
 
         <div className="mt-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-primary">Peta Titik Unit</h2>
+            <h3 className="text-xl font-bold text-primary">Peta Titik Unit</h3>
             <p className="mt-1 text-sm text-on-surface-variant">Saprotan, Gudang Alpukat, Jual Beli Bibit, dan Balai Desa.</p>
           </div>
           <Badge tone="secondary">OpenStreetMap</Badge>
@@ -90,7 +83,7 @@ export default function UnitPage() {
 
           <aside className="grid content-stretch gap-4 lg:h-[540px] lg:grid-rows-[auto_1fr]">
             <Card className="p-5">
-              <h2 className="text-lg font-bold text-primary">Legenda Peta</h2>
+              <h3 className="text-lg font-bold text-primary">Legenda Peta</h3>
               <div className="mt-4 grid gap-4">
                 {legend.map((item) => (
                   <div key={item.label} className="flex gap-3">
@@ -105,16 +98,14 @@ export default function UnitPage() {
             </Card>
 
             <Card className="p-5">
-              <div>
-                <h2 className="text-lg font-bold text-primary">Patokan Lokasi</h2>
-                <div className="mt-4 grid gap-4 text-sm text-on-surface-variant">
-                  {LANDMARK_POINTS.map((point) => (
-                    <div key={point.id}>
-                      <p className="font-bold text-primary">{point.name}</p>
-                      <p className="mt-1 leading-6">{point.address}</p>
-                    </div>
-                  ))}
-                </div>
+              <h3 className="text-lg font-bold text-primary">Patokan Lokasi</h3>
+              <div className="mt-4 grid gap-4 text-sm text-on-surface-variant">
+                {LANDMARK_POINTS.map((point) => (
+                  <div key={point.id}>
+                    <p className="font-bold text-primary">{point.name}</p>
+                    <p className="mt-1 leading-6">{point.address}</p>
+                  </div>
+                ))}
               </div>
             </Card>
           </aside>
@@ -123,7 +114,7 @@ export default function UnitPage() {
         <div className="mt-10">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-bold text-primary">Detail Unit</h2>
+              <h3 className="text-xl font-bold text-primary">Detail Unit</h3>
               <p className="mt-1 text-sm text-on-surface-variant">Ringkasan unit ditampilkan ringkas, detail lengkap tersedia di modal.</p>
             </div>
             <Badge tone="neutral">{mappedUnitPoints.length} unit bertitik peta</Badge>
@@ -131,7 +122,7 @@ export default function UnitPage() {
 
           <UnitDetailCards groups={unitGroups} />
         </div>
-      </section>
-    </PublicShell>
+      </div>
+    </section>
   );
 }

@@ -48,7 +48,7 @@ export type BoardMember = {
   photoUrl: string;
   contact?: string;
   period?: string;
-  /** Chart tier: 1 = Ketua (top row), 2 = second row, 3 = third row, … */
+  /** Chart tier: 1 = Ketua (top row), 2 = second row, 3 = third row, â€¦ */
   level: number;
   sortOrder: number;
 };
@@ -89,8 +89,8 @@ export type Unit = {
   name: string;
   type: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   contact?: string;
   description: string;
   photoUrl?: string;
@@ -102,10 +102,13 @@ export type Unit = {
 export type UnitPoint = {
   id: string;
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   address: string;
   landmark?: string;
+  coverage?: string;
+  place?: string;
+  shippingArea?: string;
   manager?: string;
   hours?: string;
   contact?: string;

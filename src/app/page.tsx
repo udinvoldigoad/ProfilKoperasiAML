@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, ChevronDown, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
+import { GalleryCarousel } from "@/components/public/gallery-carousel";
+import { ProfileAnnouncementsSection } from "@/components/public/profile-announcements-section";
+import { ProfileStructureSection } from "@/components/public/profile-structure-section";
+import { ProfileUnitsSection } from "@/components/public/profile-units-section";
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
@@ -7,10 +11,13 @@ import { Card } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { hardcodedGallery, products } from "@/lib/data";
+import { listAnnouncements } from "@/lib/db/announcements";
 import { getSiteProfile } from "@/lib/db/settings";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
-  const siteProfile = await getSiteProfile();
+  const [siteProfile, announcements] = await Promise.all([getSiteProfile(), listAnnouncements()]);
   return (
     <PublicShell>
       {/* HERO */}
@@ -56,7 +63,7 @@ export default async function HomePage() {
                 <ArrowRight size={16} aria-hidden="true" className="hidden shrink-0 sm:inline" />
               </Link>
               <Link
-                href="/unit"
+                href="#unit"
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-secondary-container px-3 text-xs font-bold sm:text-sm text-white shadow-soft transition hover:brightness-105 sm:min-h-12 sm:px-6"
               >
                 <MapPin size={16} aria-hidden="true" className="hidden shrink-0 sm:inline" />
@@ -159,6 +166,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <ProfileUnitsSection />
+
       {/* GALERI */}
       <section id="galeri" className="scroll-mt-24 bg-white py-16 sm:py-20">
         <div className="container-page">
@@ -167,36 +176,22 @@ export default async function HomePage() {
             title="Dokumentasi kegiatan dan potensi desa"
             description="Sekilas potret kegiatan koperasi dan potensi pertanian Desa Giri Mulyo."
           />
-          <Reveal className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-            {hardcodedGallery.map((item) => (
-              <figure key={item.id} className="group relative overflow-hidden rounded-2xl border border-border-subtle">
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                <figcaption className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                  <span className="inline-flex rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur sm:text-xs">
-                    {item.category}
-                  </span>
-                  <h3 className="mt-1.5 text-sm font-bold leading-tight text-white sm:text-base">{item.title}</h3>
-                </figcaption>
-              </figure>
-            ))}
-          </Reveal>
+          <GalleryCarousel items={hardcodedGallery} />
           <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-border-subtle bg-surface-gray p-8 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
               <h3 className="text-xl font-bold text-primary">Ingin mengenal unit usaha kami?</h3>
               <p className="mt-1 text-on-surface-variant">Lihat unit-unit koperasi beserta titik lokasinya pada peta.</p>
             </div>
-            <ButtonLink href="/unit">
+            <ButtonLink href="#unit">
               Lihat Unit Koperasi
               <ChevronRight size={18} aria-hidden="true" />
             </ButtonLink>
           </div>
         </div>
       </section>
+
+      <ProfileStructureSection />
+      <ProfileAnnouncementsSection announcements={announcements} />
     </PublicShell>
   );
 }

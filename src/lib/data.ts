@@ -53,11 +53,11 @@ export const siteProfile = {
   district: "Kecamatan Marga Sekampung",
   regency: "Kabupaten Lampung Timur",
   address: "Desa Giri Mulyo, Kec. Marga Sekampung, Kab. Lampung Timur",
-  whatsapp: "+6281234567890",
-  email: "admin@agrimulyolestari.id",
+  whatsapp: "+6282376314085",
+  email: "koperasiam1258@gmail.com",
   operationalHours: "Senin - Jumat, 08.00 - 15.00 WIB",
-  heroImage: "/images/hero-desa-giri-mulyo.png",
-  meetingImage: "/images/rapat-koperasi.png"
+  heroImage: "/images/hero.jpeg",
+  meetingImage: "/images/pokat uye.jpeg"
 };
 
 export const stats = [
@@ -195,7 +195,7 @@ export const products: Product[] = [
     id: "pr-002",
     title: "Sarana Produksi Pertanian",
     description: "Penyediaan pupuk, benih, dan alat pendukung kebutuhan usaha tani anggota.",
-    imageUrl: "/images/hero-desa-giri-mulyo.png",
+    imageUrl: "/images/saprotan.jpeg",
     category: "Pertanian",
     status: "aktif"
   },
@@ -203,7 +203,7 @@ export const products: Product[] = [
     id: "pr-003",
     title: "Jual Beli Bibit Pertanian",
     description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga.",
-    imageUrl: "/images/hero-desa-giri-mulyo.png",
+    imageUrl: "/images/bibit siger.jpg",
     category: "Pertanian",
     status: "aktif"
   },
@@ -225,7 +225,7 @@ export const posts: Post[] = [
     excerpt: "Koperasi menyiapkan sistem data anggota dan presensi QR untuk pelayanan yang lebih tertib.",
     content:
       "Rapat Anggota Tahunan 2026 menjadi momentum penting bagi Koperasi Agro Mulyo Lestari untuk memperkuat tata kelola. Pengurus memprioritaskan data anggota yang rapi, rekap kegiatan yang mudah diaudit, dan pelayanan yang lebih transparan bagi masyarakat desa.",
-    thumbnailUrl: "/images/rapat-koperasi.png",
+    thumbnailUrl: "/images/pokat uye.jpeg",
     category: "Kegiatan",
     author: "Admin Koperasi",
     status: "publish",
@@ -238,7 +238,7 @@ export const posts: Post[] = [
     excerpt: "Pendataan kebutuhan pupuk dan bibit dilakukan agar distribusi lebih tepat sasaran.",
     content:
       "Pengurus koperasi membuka pendataan kebutuhan pertanian untuk anggota aktif. Program ini membantu koperasi menghimpun kebutuhan secara kolektif sehingga harga dan distribusi dapat dikelola lebih baik.",
-    thumbnailUrl: "/images/hero-desa-giri-mulyo.png",
+    thumbnailUrl: "/images/saprotan.jpeg",
     category: "Produk Layanan",
     author: "Admin Koperasi",
     status: "publish",
@@ -249,27 +249,51 @@ export const posts: Post[] = [
 export const hardcodedGallery: GalleryItem[] = [
   {
     id: "g-001",
-    title: "Lanskap Pertanian Giri Mulyo",
-    imageUrl: "/images/hero-desa-giri-mulyo.png",
-    description: "Dokumentasi visual potensi agraris desa sebagai identitas koperasi.",
+    title: "Hari Koperasi Nasional ke-77",
+    imageUrl: "/images/girimulyo asik/hari koperasi nasional ke 77.jpeg",
+    description: "Dokumentasi kegiatan Hari Koperasi Nasional ke-77 bersama warga dan pengurus.",
     eventDate: "2026-06-01",
-    category: "Potensi Desa"
-  },
-  {
-    id: "g-002",
-    title: "Rapat Koordinasi Pengurus",
-    imageUrl: "/images/rapat-koperasi.png",
-    description: "Kegiatan koordinasi pengurus untuk program pelayanan anggota.",
-    eventDate: "2026-06-14",
     category: "Kegiatan"
   },
   {
+    id: "g-002",
+    title: "Juara 1 Pos Pelayanan Teknologi Tepat Guna",
+    imageUrl: "/images/girimulyo asik/juara 1 pos pelayanan teknoologi tepat guna.jpeg",
+    description: "Capaian desa dalam pengembangan pos pelayanan teknologi tepat guna.",
+    eventDate: "2026-06-02",
+    category: "Prestasi"
+  },
+  {
     id: "g-003",
-    title: "Persiapan Program Digital",
-    imageUrl: "/images/rapat-koperasi.png",
-    description: "Pendampingan awal sistem data anggota dan presensi kegiatan koperasi.",
-    eventDate: "2026-06-21",
-    category: "Digitalisasi"
+    title: "Kunjungan Kerja",
+    imageUrl: "/images/girimulyo asik/kunjungan kerja.jpeg",
+    description: "Kunjungan kerja dan koordinasi untuk pengembangan program desa.",
+    eventDate: "2026-06-03",
+    category: "Kunjungan"
+  },
+  {
+    id: "g-004",
+    title: "Pameran Produk Desa",
+    imageUrl: "/images/girimulyo asik/pameran.jpeg",
+    description: "Pameran potensi dan produk unggulan Desa Giri Mulyo.",
+    eventDate: "2026-06-04",
+    category: "Pameran"
+  },
+  {
+    id: "g-005",
+    title: "Studi Banding",
+    imageUrl: "/images/girimulyo asik/studi banding.jpeg",
+    description: "Kegiatan studi banding untuk memperkuat tata kelola dan layanan desa.",
+    eventDate: "2026-06-05",
+    category: "Pembelajaran"
+  },
+  {
+    id: "g-006",
+    title: "Tanam Bibit",
+    imageUrl: "/images/girimulyo asik/tanam bibit.jpeg",
+    description: "Kegiatan penanaman bibit sebagai bagian dari penguatan potensi pertanian.",
+    eventDate: "2026-06-06",
+    category: "Pertanian"
   }
 ];
 
@@ -300,54 +324,46 @@ export const unitGroups: UnitGroup[] = [
     id: "alpukat",
     name: "Gudang Distribusi Pertanian Alpukat",
     category: "Distribusi Alpukat",
-    type: "Pemasaran / pengumpul buah alpukat",
+    type: "Unit: Buah Alpukat",
     description:
-      "Pengumpulan, penimbangan, pemasaran, dan penjaminan pembelian hasil panen alpukat petani. Tersebar di beberapa titik pengumpul.",
+      "Gudang utama untuk penerimaan, penimbangan, dan distribusi buah alpukat anggota koperasi.",
     status: "aktif",
     points: [
       {
-        id: "alpukat-anton",
-        name: "Pengumpul Mas Anton",
-        latitude: -5.376928,
-        longitude: 105.66379,
-        address: "Jl. P. Senopati, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
-        landmark: "0,59 KM dari balai desa",
-        manager: "Anton Marzuki",
-        hours: "Menyesuaikan aktivitas panen",
-        contact: "082177779347"
-      },
-      {
-        id: "alpukat-tdah",
-        name: "Pengumpul TDAH Buah",
-        latitude: -5.377098,
-        longitude: 105.663883,
-        address: "Jl. P. Senopati, Dusun 2 RT 7 Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
-        landmark: "0,61 KM dari balai desa",
-        manager: "Misnadi",
-        hours: "Menyesuaikan aktivitas panen",
-        contact: "081366732877"
-      },
-      {
-        id: "alpukat-pahrul",
-        name: "Pengumpul Pahrul Buah",
-        latitude: -5.375964,
-        longitude: 105.665787,
-        address: "Jl. P. Senopati, RT 9 Dusun 2, Marga Sekampung, Kab. Lampung Timur, Lampung 35152",
-        landmark: "0,73 KM dari balai desa",
-        manager: "Pahrul",
-        hours: "Menyesuaikan aktivitas panen",
-        contact: "081278899761"
+        id: "gudang-alpukat-hadi-sutomo",
+        name: "Lokasi Gudang",
+        latitude: -5.370514,
+        longitude: 105.651198,
+        address: "Jalan P. Senopati, RT 26 Dusun 07, Marga Sekampung, Kabupaten Lampung Timur, Lampung",
+        landmark: "1,01 KM dari balai desa",
+        coverage: "RHL ada dari luar juga dari Gunung",
+        manager: "Hadi Sutomo",
+        hours: "07.00 - sampai selesai",
+        contact: "081367611473"
       }
     ]
   },
   {
     id: "bibit",
-    name: "Jual Beli Bibit Pertanian",
+    name: "Jual Beli Bibit & Sekretariat Koperasi",
     category: "Bibit",
-    type: "Penyediaan & penjualan bibit",
-    description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga. Data lokasi menyusul.",
-    status: "menyusul",
-    points: []
+    type: "Unit: Pengumpulan Bibit",
+    description: "Tempat pengumpulan bibit sekaligus kantor sekretariat Koperasi Agro Mulyo Lestari.",
+    status: "aktif",
+    points: [
+      {
+        id: "bibit-sekretariat-koperasi",
+        name: "Jual Beli Bibit / Sekretariat Koperasi AML",
+        latitude: -5.369669,
+        longitude: 105.652952,
+        address: "Dusun 7 RT 64, Jalan P. Senopati, Marga Sekampung, Lampung Timur",
+        landmark: "0,86 KM dari balai desa",
+        place: "Pengumpulan bibit",
+        shippingArea: "Kalimantan, Papua, Sulawesi, Aceh, Medan, dan daerah lainnya",
+        manager: "Bapak Suparno",
+        contact: "0823-7631-4085"
+      }
+    ]
   }
 ];
 

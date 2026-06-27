@@ -7,16 +7,16 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/button-link";
 
-const LANDING_SECTIONS = ["tentang", "produk", "galeri"];
+const LANDING_SECTIONS = ["tentang", "produk", "unit", "galeri", "struktur", "pengumuman"];
 
 const navItems = [
   { href: "/", label: "Beranda" },
   { href: "/#tentang", label: "Tentang" },
   { href: "/#produk", label: "Produk" },
+  { href: "/#unit", label: "Unit" },
   { href: "/#galeri", label: "Galeri" },
-  { href: "/struktur", label: "Struktur" },
-  { href: "/unit", label: "Unit" },
-  { href: "/pengumuman", label: "Pengumuman" }
+  { href: "/#struktur", label: "Struktur" },
+  { href: "/#pengumuman", label: "Pengumuman" }
 ];
 
 export function PublicNav() {

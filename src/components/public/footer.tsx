@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { getSiteProfile } from "@/lib/db/settings";
 
@@ -22,20 +22,17 @@ export async function Footer() {
             <Link href="/#tentang" className="hover:text-primary">
               Tentang Koperasi
             </Link>
-            <Link href="/struktur" className="hover:text-primary">
+            <Link href="/#struktur" className="hover:text-primary">
               Struktur Keanggotaan
             </Link>
-            <Link href="/unit" className="hover:text-primary">
+            <Link href="/#unit" className="hover:text-primary">
               Unit Koperasi
             </Link>
-            <Link href="/pengumuman" className="hover:text-primary">
+            <Link href="/#pengumuman" className="hover:text-primary">
               Pengumuman
             </Link>
             <Link href="/signup" className="hover:text-primary">
               Pendaftaran Anggota
-            </Link>
-            <Link href="/login" className="hover:text-primary">
-              Login
             </Link>
           </div>
         </div>

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
       "Portal koperasi desa untuk profil publik, manajemen anggota, acara, dan presensi QR.",
     url: siteUrl,
     siteName: "Koperasi Agro Mulyo Lestari",
-    images: ["/images/hero-desa-giri-mulyo.png"],
+    images: ["/images/hero.jpeg"],
     locale: "id_ID",
     type: "website"
   }
