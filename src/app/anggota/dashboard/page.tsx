@@ -1,23 +1,21 @@
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, QrCode, UserRound } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { DashboardAttendanceList } from "@/components/anggota/dashboard-attendance-list";
 import { Card } from "@/components/ui/card";
 import { getSessionUser } from "@/lib/auth";
 import { getMemberForSession } from "@/lib/db/members";
 import { listMemberAttendances } from "@/lib/db/attendances";
 import { listEvents } from "@/lib/db/events";
-import { formatDateID } from "@/lib/utils";
 
 export default async function AnggotaDashboardPage() {
   const session = await getSessionUser();
   const member = session?.member ? await getMemberForSession(session.member.id) : null;
   const events = await listEvents();
-  // Highlight the event happening now, otherwise the soonest upcoming one.
   const activeEvent = events.find((event) => event.status === "aktif") ?? null;
   const upcoming = events.filter((event) => event.status === "draft").sort((a, b) => a.date.localeCompare(b.date));
   const nextEvent = activeEvent ?? upcoming[0] ?? null;
   const hasActiveEvent = Boolean(activeEvent);
-  const memberAttendances = member ? (await listMemberAttendances(member.id)).slice(0, 3) : [];
+  const memberAttendances = member ? await listMemberAttendances(member.id) : [];
 
   return (
     <div className="grid gap-6">
@@ -63,7 +61,6 @@ export default async function AnggotaDashboardPage() {
           <p className="mt-1 hidden text-sm text-on-surface-variant sm:block">{nextEvent ? nextEvent.title : "Belum ada acara terjadwal"}</p>
         </Link>
 
-        {/* Presensi QR — same 3-column grid, but deliberately styled to stand out. */}
         <Link
           href="/presensi/scan"
           className="group relative flex flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-secondary-container to-secondary p-4 text-white shadow-soft transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 sm:p-6"
@@ -90,23 +87,7 @@ export default async function AnggotaDashboardPage() {
 
       <Card>
         <h2 className="text-xl font-bold text-primary">Riwayat Terbaru</h2>
-        <div className="mt-4 grid gap-3">
-          {memberAttendances.length > 0 ? (
-            memberAttendances.map((attendance) => (
-              <div key={attendance.id} className="flex flex-col gap-2 rounded-2xl bg-surface-gray p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-bold text-primary">{attendance.eventTitle}</p>
-                  <p className="text-sm text-muted-text">{attendance.eventDate ? formatDateID(attendance.eventDate) : "-"}</p>
-                </div>
-                <Badge tone="success">Hadir</Badge>
-              </div>
-            ))
-          ) : (
-            <p className="rounded-2xl bg-surface-gray p-4 text-sm text-on-surface-variant">
-              Belum ada riwayat kehadiran. Pindai QR presensi saat menghadiri acara untuk mulai mencatat kehadiran Anda.
-            </p>
-          )}
-        </div>
+        <DashboardAttendanceList rows={memberAttendances} />
       </Card>
     </div>
   );
