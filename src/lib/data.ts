@@ -334,7 +334,7 @@ export const unitGroups: UnitGroup[] = [
         name: "Lokasi Gudang",
         latitude: -5.370514,
         longitude: 105.651198,
-        address: "Jalan P. Senopati, RT 26 Dusun 07, Marga Sekampung, Kabupaten Lampung Timur, Lampung",
+        address: "Jalan P. Senopati, RT 26 Dusun 07, Marga Sekampung, Kabupaten Lampung Timur",
         landmark: "1,01 KM dari balai desa",
         coverage: "RHL ada dari luar juga dari Gunung",
         manager: "Hadi Sutomo",
