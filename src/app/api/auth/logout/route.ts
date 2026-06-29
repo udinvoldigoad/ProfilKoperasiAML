@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { clearGuestSessionCookie } from "@/lib/guest-session";
 import { clearSessionCookie } from "@/lib/session";
 
 function safeNext(value: string | null) {
@@ -13,5 +14,6 @@ export async function POST(request: NextRequest) {
 
   const response = new NextResponse(null, { status: 303, headers: { Location: next } });
   clearSessionCookie(response);
+  clearGuestSessionCookie(response);
   return response;
 }

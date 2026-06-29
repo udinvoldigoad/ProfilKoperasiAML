@@ -157,39 +157,66 @@ export async function softDeleteEvent(id: string): Promise<MutationResult> {
 }
 
 export type EventAttendanceRow = {
+  attendeeId: string;
+  attendeeType: "anggota" | "tamu";
   memberId: string;
   memberNumber: string;
   fullName: string;
   nik: string;
+  phone: string;
   attendedAt: string | null;
 };
 
-/** Active members with their attendance status for one event (present + absent). */
+/** Active members with their attendance status, plus guest attendance rows for one event. */
 export async function getEventAttendanceRows(eventId: string): Promise<EventAttendanceRow[]> {
   if (!isDatabaseConfigured()) return [];
 
   try {
-    const [members, attendances] = await Promise.all([
+    const [members, attendances, guestAttendances] = await Promise.all([
       prisma.member.findMany({
         where: { status: "aktif", deletedAt: null },
-        select: { id: true, memberNumber: true, fullName: true, nik: true },
+        select: { id: true, memberNumber: true, fullName: true, nik: true, phone: true },
         orderBy: [{ memberType: "asc" }, { memberNumber: "asc" }]
       }),
       prisma.attendance.findMany({
         where: { eventId },
         select: { memberId: true, attendedAt: true }
+      }),
+      prisma.guestAttendance.findMany({
+        where: { eventId, guest: { expiresAt: { gt: new Date() } } },
+        select: {
+          guestId: true,
+          attendedAt: true,
+          guest: { select: { name: true, phone: true } }
+        },
+        orderBy: { attendedAt: "asc" }
       })
     ]);
 
     const attendedAtByMember = new Map(attendances.map((row) => [row.memberId, row.attendedAt.toISOString()]));
-
-    return members.map((member) => ({
+    const memberRows = members.map((member) => ({
+      attendeeId: member.id,
+      attendeeType: "anggota" as const,
       memberId: member.id,
       memberNumber: member.memberNumber,
       fullName: member.fullName,
       nik: member.nik,
+      phone: member.phone ?? "",
       attendedAt: attendedAtByMember.get(member.id) ?? null
     }));
+
+    const guestRows = guestAttendances.map((row) => ({
+      attendeeId: row.guestId,
+      attendeeType: "tamu" as const,
+      memberId: row.guestId,
+      memberNumber: "Tamu",
+      fullName: row.guest.name,
+      nik: row.guest.phone,
+      phone: row.guest.phone,
+      attendedAt: row.attendedAt.toISOString()
+    }));
+
+    return [...memberRows, ...guestRows];
   } catch {
     return [];
   }

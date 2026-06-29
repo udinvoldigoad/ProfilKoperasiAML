@@ -27,15 +27,16 @@ function PresensiTable({
           <h2 className="text-lg font-bold text-primary">{title}</h2>
           <p className="text-sm text-on-surface-variant">{description}</p>
         </div>
-        <Badge tone={isPresent ? "success" : "warning"}>{rows.length} anggota</Badge>
+        <Badge tone={isPresent ? "success" : "warning"}>{rows.length} {isPresent ? "peserta" : "anggota"}</Badge>
       </div>
       <div className="overflow-x-auto table-scroll">
-        <table className="w-full min-w-[760px] text-left">
+        <table className="w-full min-w-[820px] text-left">
           <thead className="bg-surface-gray text-sm text-on-surface-variant">
             <tr>
+              <th className="px-5 py-4">Jenis</th>
               <th className="px-5 py-4">No Anggota</th>
               <th className="px-5 py-4">Nama</th>
-              <th className="px-5 py-4">NIK</th>
+              <th className="px-5 py-4">NIK / No HP</th>
               <th className="px-5 py-4">Status</th>
               {isPresent ? <th className="px-5 py-4">Waktu Hadir</th> : null}
             </tr>
@@ -43,10 +44,13 @@ function PresensiTable({
           <tbody className="divide-y divide-border-subtle">
             {rows.length > 0 ? (
               rows.map((row) => (
-                <tr key={row.memberId}>
+                <tr key={`${row.attendeeType}-${row.attendeeId}`}>
+                  <td className="px-5 py-4">
+                    <Badge tone={row.attendeeType === "tamu" ? "secondary" : "success"}>{row.attendeeType === "tamu" ? "Tamu" : "Anggota"}</Badge>
+                  </td>
                   <td className="px-5 py-4 font-bold text-primary">{row.memberNumber}</td>
                   <td className="px-5 py-4 font-bold">{row.fullName}</td>
-                  <td className="px-5 py-4">{row.nik}</td>
+                  <td className="px-5 py-4">{row.attendeeType === "tamu" ? row.phone : row.nik}</td>
                   <td className="px-5 py-4">
                     <Badge tone={isPresent ? "success" : "warning"}>{isPresent ? "Hadir" : "Tidak Hadir"}</Badge>
                   </td>
@@ -55,8 +59,8 @@ function PresensiTable({
               ))
             ) : (
               <tr>
-                <td colSpan={isPresent ? 5 : 4} className="px-5 py-8 text-center text-on-surface-variant">
-                  {isPresent ? "Belum ada anggota yang hadir." : "Semua anggota aktif sudah tercatat hadir."}
+                <td colSpan={isPresent ? 6 : 5} className="px-5 py-8 text-center text-on-surface-variant">
+                  {isPresent ? "Belum ada peserta yang hadir." : "Semua anggota aktif sudah tercatat hadir."}
                 </td>
               </tr>
             )}
@@ -73,12 +77,13 @@ export default async function PresensiAcaraPage({ params }: { params: Promise<{ 
   if (!event) notFound();
   const rows = await getEventAttendanceRows(event.id);
   const presentRows = rows.filter((row) => Boolean(row.attendedAt));
-  const absentRows = rows.filter((row) => !row.attendedAt);
+  const absentRows = rows.filter((row) => row.attendeeType === "anggota" && !row.attendedAt);
   const exportRows = rows.map((row) => ({
     acara: event.title,
+    jenis: row.attendeeType === "tamu" ? "Tamu" : "Anggota",
     no_anggota: row.memberNumber,
     nama: row.fullName,
-    nik: row.nik,
+    nik_no_hp: row.attendeeType === "tamu" ? row.phone : row.nik,
     status: row.attendedAt ? "Hadir" : "Tidak Hadir",
     waktu_hadir: row.attendedAt ? formatDateTimeWIB(row.attendedAt) : ""
   }));
@@ -92,8 +97,8 @@ export default async function PresensiAcaraPage({ params }: { params: Promise<{ 
       />
       <div className="grid gap-6">
         <PresensiTable
-          title="Daftar Anggota Hadir"
-          description="Anggota yang sudah tercatat presensi pada acara ini."
+          title="Daftar Peserta Hadir"
+          description="Anggota dan tamu yang sudah tercatat presensi pada acara ini."
           rows={presentRows}
           mode="hadir"
         />

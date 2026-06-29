@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { siteAssetUrl } from "@/lib/site-assets";
 import { AlertTriangle } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
@@ -51,6 +52,15 @@ export default async function LoginPage({
               </div>
             )}
           </Card>
+
+          {configured ? (
+            <Link
+              href={`/tamu/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}
+              className="mt-4 flex min-h-11 items-center justify-center rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
+            >
+              Presensi sebagai tamu
+            </Link>
+          ) : null}
 
           {!configured ? <RegisterCta whatsapp={whatsapp} /> : null}
         </div>

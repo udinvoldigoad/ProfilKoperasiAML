@@ -36,14 +36,18 @@ export async function listMemberAttendances(memberId: string): Promise<MemberAtt
   }
 }
 
-/** Number of attendance records logged in the current calendar month. */
+/** Number of member and guest attendance records logged in the current calendar month. */
 export async function countAttendancesThisMonth(): Promise<number> {
   const startOfMonth = wibMonthStartUtc();
 
   if (!isDatabaseConfigured()) return 0;
 
   try {
-    return await prisma.attendance.count({ where: { attendedAt: { gte: new Date(startOfMonth) } } });
+    const [members, guests] = await Promise.all([
+      prisma.attendance.count({ where: { attendedAt: { gte: new Date(startOfMonth) } } }),
+      prisma.guestAttendance.count({ where: { attendedAt: { gte: new Date(startOfMonth) } } })
+    ]);
+    return members + guests;
   } catch {
     return 0;
   }

@@ -6,10 +6,13 @@ import { AlertCircle, ArrowRight, CalendarCheck2, CheckCircle2, Clock3, Loader2,
 import { formatDateTimeWIB, parseQrToken } from "@/lib/utils";
 
 type ScanState = "idle" | "scanning" | "submitting" | "success" | "error";
+type Viewer = "anggota" | "tamu";
 
 type ScanResult = {
   eventTitle: string;
-  memberName: string;
+  attendeeName?: string;
+  attendeeType?: Viewer;
+  memberName?: string;
   attendedAt: string;
   method: string;
 };
@@ -45,7 +48,7 @@ function DetailRow({ icon: Icon, label, value }: { icon: typeof CalendarCheck2; 
   );
 }
 
-export function QrScanner({ initialToken }: { initialToken?: string }) {
+export function QrScanner({ initialToken, viewer = "anggota" }: { initialToken?: string; viewer?: Viewer }) {
   const [state, setState] = useState<ScanState>("idle");
   const [message, setMessage] = useState("Menyiapkan kamera...");
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -100,9 +103,16 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
       body: JSON.stringify({ token })
     });
     const payload = (await response.json()) as ValidationPayload;
+    const nextResult = payload.result
+      ? {
+          ...payload.result,
+          attendeeName: payload.result.attendeeName ?? payload.result.memberName ?? "Peserta",
+          attendeeType: payload.result.attendeeType ?? viewer
+        }
+      : null;
     setState(payload.ok ? "success" : "error");
     setMessage(payload.message);
-    setResult(payload.ok && payload.result ? payload.result : null);
+    setResult(payload.ok ? nextResult : null);
   }
 
   useEffect(() => {
@@ -110,9 +120,6 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
 
     async function start() {
       try {
-        // Camera (getUserMedia) only works in a secure context: https or
-        // localhost/127.0.0.1. Over http on a LAN IP (e.g. from a phone) the
-        // browser blocks it silently — no permission prompt ever appears.
         if (typeof window !== "undefined" && !window.isSecureContext) {
           setState("error");
           setMessage(
@@ -182,6 +189,8 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
     }
   }, [initialToken]);
 
+  const isGuest = viewer === "tamu";
+
   if (state === "success") {
     return (
       <section className="overflow-hidden rounded-3xl border border-green-200 bg-white">
@@ -195,7 +204,7 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
         </div>
 
         <div className="grid gap-3 px-5 pb-6 sm:px-8">
-          <DetailRow icon={UserRound} label="Nama Anggota" value={result?.memberName ?? "Anggota"} />
+          <DetailRow icon={UserRound} label={isGuest ? "Nama Tamu" : "Nama Anggota"} value={result?.attendeeName ?? (isGuest ? "Tamu" : "Anggota")} />
           <DetailRow icon={CalendarCheck2} label="Acara" value={result?.eventTitle ?? "Acara koperasi"} />
           <DetailRow icon={Clock3} label="Waktu Presensi" value={result?.attendedAt ? formatDateTimeWIB(result.attendedAt) : "Baru saja"} />
           <DetailRow icon={QrCode} label="Metode" value={result?.method ?? "QR Code"} />
@@ -203,17 +212,17 @@ export function QrScanner({ initialToken }: { initialToken?: string }) {
 
         <div className="grid gap-3 border-t border-border-subtle bg-surface-container-low p-5 sm:grid-cols-2 sm:p-6">
           <Link
-            href="/anggota/riwayat-kehadiran"
+            href={isGuest ? "/" : "/anggota/riwayat-kehadiran"}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white"
           >
-            Lihat Riwayat
+            {isGuest ? "Selesai" : "Lihat Riwayat"}
             <ArrowRight size={18} aria-hidden="true" />
           </Link>
           <Link
-            href="/anggota/dashboard"
+            href={isGuest ? "/tamu/login?next=%2Fpresensi%2Fscan" : "/anggota/dashboard"}
             className="inline-flex min-h-12 items-center justify-center rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
           >
-            Kembali ke Dashboard
+            {isGuest ? "Ganti Tamu" : "Kembali ke Dashboard"}
           </Link>
         </div>
       </section>

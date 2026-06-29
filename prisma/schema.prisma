@@ -103,8 +103,9 @@ model Event {
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
-  creator     Profile?     @relation("EventCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  attendances Attendance[]
+  creator         Profile?          @relation("EventCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  attendances     Attendance[]
+  guestAttendances GuestAttendance[]
 
   @@index([status, date])
   @@index([deletedAt])
@@ -127,6 +128,39 @@ model Attendance {
   @@unique([eventId, memberId])
   @@index([memberId])
   @@map("attendances")
+}
+
+model Guest {
+  id              String   @id @default(uuid()) @db.Char(36)
+  name            String   @db.VarChar(191)
+  phone           String   @db.VarChar(50)
+  normalizedPhone String   @unique @map("normalized_phone") @db.VarChar(50)
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  attendances GuestAttendance[]
+
+  @@index([expiresAt])
+  @@map("guests")
+}
+
+model GuestAttendance {
+  id         String           @id @default(uuid()) @db.Char(36)
+  eventId    String           @map("event_id") @db.Char(36)
+  guestId    String           @map("guest_id") @db.Char(36)
+  attendedAt DateTime         @default(now()) @map("attended_at")
+  method     AttendanceMethod @default(qr_code)
+  userAgent  String?          @map("user_agent") @db.Text
+  ipAddress  String?          @map("ip_address") @db.VarChar(100)
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, guestId])
+  @@index([guestId])
+  @@map("guest_attendances")
 }
 
 model Announcement {

@@ -18,7 +18,7 @@ function dashboardRedirect(request: NextRequest, path: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAdminArea = pathname.startsWith("/admin");
-  const isMemberArea = pathname.startsWith("/anggota") || pathname === "/presensi/scan";
+  const isMemberArea = pathname.startsWith("/anggota");
 
   const claims = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
   if (!claims) {
@@ -42,5 +42,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/anggota/:path*", "/presensi/scan"]
+  matcher: ["/admin/:path*", "/anggota/:path*"]
 };

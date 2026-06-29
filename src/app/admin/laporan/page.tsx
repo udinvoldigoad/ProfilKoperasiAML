@@ -30,9 +30,10 @@ export default async function AdminLaporanPage() {
         excelRows: rows.map((row) => ({
           acara: event.title,
           tanggal: event.date,
+          jenis: row.attendeeType === "tamu" ? "Tamu" : "Anggota",
           no_anggota: row.memberNumber,
           nama: row.fullName,
-          nik: row.nik,
+          nik_no_hp: row.attendeeType === "tamu" ? row.phone : row.nik,
           status: row.attendedAt ? "Hadir" : "Tidak Hadir",
           waktu_hadir: row.attendedAt ? formatDateTimeWIB(row.attendedAt) : ""
         }))
