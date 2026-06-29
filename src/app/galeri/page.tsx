@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Camera, Images } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -22,6 +23,7 @@ export default async function GaleriPage() {
     <PublicShell>
       <main className="bg-surface-gray">
         <section className="container-page py-14 sm:py-20">
+          <BackButton className="mb-4" />
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <SectionHeading
               eyebrow="Galeri"

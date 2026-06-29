@@ -182,12 +182,6 @@ export default async function HomePage() {
             description="Sekilas potret kegiatan koperasi dan potensi pertanian Desa Giri Mulyo."
           />
           <GalleryCarousel items={homepageGalleryItems} />
-          <div className="mt-6 flex justify-end">
-            <ButtonLink href="/galeri" variant="secondary">
-              <Images size={18} aria-hidden="true" />
-              Lihat Foto Lainnya
-            </ButtonLink>
-          </div>
           <div className="relative mt-10 overflow-hidden rounded-3xl border-2 border-primary-container/70 bg-surface-gray p-8 text-center shadow-[0_18px_45px_rgba(0,91,105,0.16)] outline outline-4 outline-secondary-container/25 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:text-left">
             <div className="absolute inset-x-8 top-0 h-1 rounded-b-full bg-primary-container" aria-hidden="true" />
             <div>

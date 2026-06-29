@@ -23,6 +23,14 @@ export function galleryPublicUrl(filename: string) {
   return `/api/galeri/file/${encodeURIComponent(filename)}`;
 }
 
+export function galleryFilenameFromUrl(url?: string | null) {
+  if (!url) return null;
+  const prefix = "/api/galeri/file/";
+  if (!url.startsWith(prefix)) return null;
+  const filename = decodeURIComponent(url.slice(prefix.length));
+  return isSafeGalleryFilename(filename) ? filename : null;
+}
+
 export function isSafeGalleryFilename(filename: string) {
   return /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,180}$/.test(filename);
 }

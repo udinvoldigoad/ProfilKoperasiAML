@@ -11,6 +11,7 @@ export type CreateGalleryInput = {
 };
 
 export type MutationResult = { ok: true; item: GalleryItem } | { ok: false; error: string };
+export type DeleteGalleryResult = { ok: true; item: GalleryItem } | { ok: false; error: string };
 
 function dateOnly(value: Date | string | null | undefined): string {
   if (!value) return new Date().toISOString().slice(0, 10);
@@ -89,5 +90,19 @@ export async function createGalleryItem(input: CreateGalleryInput): Promise<Muta
     return { ok: true, item: mapRow(row) };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Gagal menyimpan galeri." };
+  }
+}
+
+export async function deleteGalleryItem(id: string): Promise<DeleteGalleryResult> {
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
+
+  try {
+    const existing = await prisma.gallery.findUnique({ where: { id } });
+    if (!existing) return { ok: false, error: "Foto galeri tidak ditemukan atau merupakan foto awal." };
+
+    const row = await prisma.gallery.delete({ where: { id } });
+    return { ok: true, item: mapRow(row) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal menghapus galeri." };
   }
 }

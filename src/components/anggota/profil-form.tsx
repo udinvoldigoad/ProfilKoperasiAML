@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Camera, CheckCircle2, ImageUp, Save, UserRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Camera, CheckCircle2, ImageUp, Save, UserRound, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -26,6 +26,19 @@ type ReadOnlyInfo = {
 
 const PROFILE_PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const PROFILE_PHOTO_MAX_FILE_SIZE = 4 * 1024 * 1024;
+const CROP_VIEWPORT_SIZE = 288;
+const CROPPED_PHOTO_SIZE = 640;
+
+type CropState = {
+  x: number;
+  y: number;
+  zoom: number;
+};
+
+type CropImageSize = {
+  width: number;
+  height: number;
+};
 
 const FIELDS: Array<{ key: keyof ProfilFormState; label: string; placeholder: string; type?: string; required?: boolean }> = [
   { key: "fullName", label: "Nama Lengkap", placeholder: "Nama lengkap Anda", required: true },
@@ -35,13 +48,79 @@ const FIELDS: Array<{ key: keyof ProfilFormState; label: string; placeholder: st
   { key: "address", label: "Alamat", placeholder: "Alamat lengkap", required: true }
 ];
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function baseImageSize(imageSize: CropImageSize) {
+  const baseScale = Math.max(CROP_VIEWPORT_SIZE / imageSize.width, CROP_VIEWPORT_SIZE / imageSize.height);
+  return {
+    width: imageSize.width * baseScale,
+    height: imageSize.height * baseScale,
+    scale: baseScale
+  };
+}
+
+function clampCrop(crop: CropState, imageSize: CropImageSize | null): CropState {
+  if (!imageSize) return crop;
+  const base = baseImageSize(imageSize);
+  const renderWidth = base.width * crop.zoom;
+  const renderHeight = base.height * crop.zoom;
+  const maxX = Math.max(0, (renderWidth - CROP_VIEWPORT_SIZE) / 2);
+  const maxY = Math.max(0, (renderHeight - CROP_VIEWPORT_SIZE) / 2);
+  return {
+    x: clamp(crop.x, -maxX, maxX),
+    y: clamp(crop.y, -maxY, maxY),
+    zoom: clamp(crop.zoom, 1, 3)
+  };
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+async function cropImageToWebpFile(src: string, crop: CropState, imageSize: CropImageSize) {
+  const image = await loadImage(src);
+  const base = baseImageSize(imageSize);
+  const totalScale = base.scale * crop.zoom;
+  const renderedWidth = image.naturalWidth * totalScale;
+  const renderedHeight = image.naturalHeight * totalScale;
+  const imageLeft = CROP_VIEWPORT_SIZE / 2 + crop.x - renderedWidth / 2;
+  const imageTop = CROP_VIEWPORT_SIZE / 2 + crop.y - renderedHeight / 2;
+  const sourceX = (0 - imageLeft) / totalScale;
+  const sourceY = (0 - imageTop) / totalScale;
+  const sourceSize = CROP_VIEWPORT_SIZE / totalScale;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = CROPPED_PHOTO_SIZE;
+  canvas.height = CROPPED_PHOTO_SIZE;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas tidak tersedia.");
+
+  context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, CROPPED_PHOTO_SIZE, CROPPED_PHOTO_SIZE);
+
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.88));
+  if (!blob) throw new Error("Gagal membuat hasil crop.");
+  return new File([blob], `foto-profil-${Date.now()}.webp`, { type: "image/webp" });
+}
+
 export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info: ReadOnlyInfo }) {
   const router = useRouter();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const dragStartRef = useRef<{ pointerId: number; x: number; y: number; cropX: number; cropY: number } | null>(null);
   const { photoUrl: initialPhotoUrl, ...profileInitial } = initial;
   const [form, setForm] = useState<ProfilFormState>(profileInitial);
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState(initialPhotoUrl);
+  const [cropSourceUrl, setCropSourceUrl] = useState<string | null>(null);
+  const [cropImageSize, setCropImageSize] = useState<CropImageSize | null>(null);
+  const [crop, setCrop] = useState<CropState>({ x: 0, y: 0, zoom: 1 });
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoSuccess, setPhotoSuccess] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -59,6 +138,12 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
     setPhotoPreview(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
   }, [photoFile, photoUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    };
+  }, [cropSourceUrl]);
 
   function update<K extends keyof ProfilFormState>(key: K, value: ProfilFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -88,7 +173,65 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
       return;
     }
 
-    setPhotoFile(file);
+    setPhotoFile(null);
+    setCropImageSize(null);
+    setCrop({ x: 0, y: 0, zoom: 1 });
+    setCropSourceUrl(URL.createObjectURL(file));
+  }
+
+  function closeCropModal() {
+    setCropSourceUrl(null);
+    setCropImageSize(null);
+    setCrop({ x: 0, y: 0, zoom: 1 });
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  }
+
+  async function applyCrop() {
+    if (!cropSourceUrl || !cropImageSize) return;
+
+    setPhotoError(null);
+    try {
+      const croppedFile = await cropImageToWebpFile(cropSourceUrl, clampCrop(crop, cropImageSize), cropImageSize);
+      setPhotoFile(croppedFile);
+      closeCropModal();
+    } catch {
+      setPhotoError("Gagal menyesuaikan foto. Coba pilih gambar lain.");
+    }
+  }
+
+  function updateCropZoom(value: number) {
+    setCrop((prev) => clampCrop({ ...prev, zoom: value }, cropImageSize));
+  }
+
+  function handleCropPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStartRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      cropX: crop.x,
+      cropY: crop.y
+    };
+  }
+
+  function handleCropPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const start = dragStartRef.current;
+    if (!start || start.pointerId !== event.pointerId) return;
+
+    const nextCrop = {
+      ...crop,
+      x: start.cropX + event.clientX - start.x,
+      y: start.cropY + event.clientY - start.y
+    };
+    setCrop(clampCrop(nextCrop, cropImageSize));
+  }
+
+  function handleCropPointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    if (dragStartRef.current?.pointerId === event.pointerId) {
+      dragStartRef.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
   async function handlePhotoSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -109,6 +252,7 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
       }
       setPhotoUrl(data.photoUrl);
       setPhotoFile(null);
+      if (photoInputRef.current) photoInputRef.current.value = "";
       setPhotoSuccess(true);
       router.refresh();
     } catch {
@@ -146,6 +290,8 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
     router.refresh();
   }
 
+  const cropBaseSize = cropImageSize ? baseImageSize(cropImageSize) : null;
+
   return (
     <>
       <Card>
@@ -160,6 +306,7 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
             </div>
             <form className="flex flex-wrap justify-center gap-2" onSubmit={handlePhotoSubmit}>
               <input
+                ref={photoInputRef}
                 id="profile-photo-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -241,6 +388,106 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info
           </div>
         </form>
       </Card>
+
+      {cropSourceUrl ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-extrabold text-primary">Sesuaikan Foto Profil</h2>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Geser foto di dalam kotak, lalu atur zoom agar wajah terlihat rapi.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCropModal}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border-subtle text-on-surface-variant hover:bg-surface-gray"
+                aria-label="Tutup crop foto"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid justify-items-center gap-4">
+              <div
+                className="relative h-72 w-72 touch-none overflow-hidden rounded-2xl border-4 border-primary-container bg-surface-gray shadow-inner"
+                onPointerDown={handleCropPointerDown}
+                onPointerMove={handleCropPointerMove}
+                onPointerUp={handleCropPointerUp}
+                onPointerCancel={handleCropPointerUp}
+              >
+                {cropBaseSize ? (
+                  <img
+                    src={cropSourceUrl}
+                    alt="Preview crop foto profil"
+                    draggable={false}
+                    onLoad={(event) => {
+                      const target = event.currentTarget;
+                      const nextSize = { width: target.naturalWidth, height: target.naturalHeight };
+                      setCropImageSize(nextSize);
+                      setCrop((prev) => clampCrop(prev, nextSize));
+                    }}
+                    className="absolute select-none object-cover"
+                    style={{
+                      left: `${CROP_VIEWPORT_SIZE / 2 + crop.x}px`,
+                      top: `${CROP_VIEWPORT_SIZE / 2 + crop.y}px`,
+                      width: `${cropBaseSize.width}px`,
+                      height: `${cropBaseSize.height}px`,
+                      transform: `translate(-50%, -50%) scale(${crop.zoom})`
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={cropSourceUrl}
+                    alt="Preview crop foto profil"
+                    draggable={false}
+                    onLoad={(event) => {
+                      const target = event.currentTarget;
+                      const nextSize = { width: target.naturalWidth, height: target.naturalHeight };
+                      setCropImageSize(nextSize);
+                      setCrop((prev) => clampCrop(prev, nextSize));
+                    }}
+                    className="h-full w-full object-cover opacity-0"
+                  />
+                )}
+                <div className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-white/90" aria-hidden="true" />
+              </div>
+
+              <label className="grid w-full gap-2 text-sm font-bold text-primary">
+                Zoom Foto
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.01"
+                  value={crop.zoom}
+                  onChange={(event) => updateCropZoom(Number(event.target.value))}
+                  className="w-full accent-primary-container"
+                />
+              </label>
+
+              <div className="grid w-full grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={closeCropModal}
+                  className="min-h-11 rounded-lg border border-border-subtle bg-white text-sm font-bold text-on-surface-variant hover:bg-surface-gray"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={applyCrop}
+                  disabled={!cropImageSize}
+                  className="min-h-11 rounded-lg bg-primary-container text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Gunakan Foto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {success ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
