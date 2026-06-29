@@ -104,10 +104,16 @@ function headerKey(value: string): ColumnKey | null {
 function isHighlighted(cell: ExcelJS.Cell): boolean {
   const fill = cell.fill as ExcelJS.FillPattern | undefined;
   if (!fill || fill.type !== "pattern" || fill.pattern !== "solid") return false;
-  const argb = fill.fgColor?.argb;
-  if (!argb) return false;
-  const upper = argb.toUpperCase();
-  return upper !== "FFFFFFFF" && upper !== "00000000" && upper !== "FF000000";
+
+  const color = fill.fgColor;
+  if (!color) return false;
+
+  if (color.argb) {
+    const upper = color.argb.toUpperCase();
+    return upper !== "FFFFFFFF" && upper !== "00000000" && upper !== "FF000000";
+  }
+
+  return color.theme !== undefined || "indexed" in color;
 }
 
 function findMemberLayout(workbook: ExcelJS.Workbook): MemberLayout | null {
