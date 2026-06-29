@@ -1,6 +1,6 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { cookies } from "next/headers";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 import type { Role } from "@/lib/auth-roles";
 
 export type SessionMember = {
@@ -21,55 +21,40 @@ export type SessionUser = {
   mustChangePassword: boolean;
 };
 
-/** Resolves the currently authenticated user from Supabase. */
+/** Resolves the currently authenticated user from the local signed session. */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  if (!isSupabaseConfigured()) return null;
+  const cookieStore = await cookies();
+  const claims = await verifySessionToken(cookieStore.get(SESSION_COOKIE)?.value);
+  if (!claims || !isDatabaseConfigured()) return null;
 
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return null;
+  try {
+    const profile = await prisma.profile.findUnique({
+      where: { id: claims.profileId },
+      include: { member: true }
+    });
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+    if (!profile) return null;
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return null;
+    const member = profile.member && !profile.member.deletedAt
+      ? {
+          id: profile.member.id,
+          memberNumber: profile.member.memberNumber,
+          fullName: profile.member.fullName,
+          nik: profile.member.nik,
+          status: profile.member.status
+        }
+      : null;
 
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("id, role, email, must_change_password")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  if (!profile) return null;
-
-  let member: SessionMember | null = null;
-  if (profile.role === "anggota") {
-    const { data: memberRow } = await admin
-      .from("members")
-      .select("id, member_number, full_name, nik, status")
-      .eq("profile_id", profile.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (memberRow) {
-      member = {
-        id: memberRow.id,
-        memberNumber: memberRow.member_number,
-        fullName: memberRow.full_name,
-        nik: memberRow.nik,
-        status: memberRow.status
-      };
-    }
+    return {
+      // Kept for compatibility with older call sites. Local auth uses profileId as the subject.
+      authUserId: profile.authUserId ?? profile.id,
+      profileId: profile.id,
+      role: profile.role as Role,
+      email: profile.email ?? null,
+      member,
+      mustChangePassword: profile.mustChangePassword
+    };
+  } catch {
+    return null;
   }
-
-  return {
-    authUserId: user.id,
-    profileId: profile.id,
-    role: profile.role as Role,
-    email: profile.email ?? user.email ?? null,
-    member,
-    mustChangePassword: Boolean(profile.must_change_password)
-  };
 }

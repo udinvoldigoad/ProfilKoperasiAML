@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { isValidNik, memberNikToAuthEmail } from "@/lib/auth-identifiers";
+import { isValidNik } from "@/lib/auth-identifiers";
 import { DASHBOARD_BY_ROLE, type Role } from "@/lib/auth-roles";
 import { clientIp } from "@/lib/db/audit-logs";
 import { checkLoginAllowed, clearLoginFailures, registerLoginFailure } from "@/lib/login-rate-limit";
+import { verifyPassword } from "@/lib/passwords";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
+import { setSessionCookie, signSession } from "@/lib/session";
 
 function safeNext(value: unknown) {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return null;
@@ -13,14 +13,13 @@ function safeNext(value: unknown) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isSupabaseConfigured()) {
+  if (!isDatabaseConfigured()) {
     return NextResponse.json(
-      { error: "Supabase belum dikonfigurasi. Hubungi admin untuk mengaktifkan backend." },
+      { error: "Database MySQL belum dikonfigurasi. Isi DATABASE_URL dari Hostinger terlebih dahulu." },
       { status: 503 }
     );
   }
 
-  // Server-side brute-force throttle per IP.
   const rateKey = clientIp(request) ?? "unknown";
   const gate = checkLoginAllowed(rateKey);
   if (!gate.allowed) {
@@ -46,86 +45,70 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Identitas dan password wajib diisi." }, { status: 400 });
   }
 
-  let email: string;
-  if (mode === "anggota") {
-    if (!isValidNik(identifier)) {
+  try {
+    const profile =
+      mode === "admin"
+        ? await prisma.profile.findFirst({
+            where: { role: "admin", email: identifier.toLowerCase() },
+            include: { member: true }
+          })
+        : isValidNik(identifier)
+          ? await prisma.profile.findFirst({
+              where: {
+                role: "anggota",
+                member: { nik: identifier, deletedAt: null }
+              },
+              include: { member: true }
+            })
+          : null;
+
+    if (mode === "anggota" && !isValidNik(identifier)) {
       return NextResponse.json({ error: "NIK harus 16 digit angka." }, { status: 400 });
     }
-    email = memberNikToAuthEmail(identifier);
-  } else {
-    email = identifier.toLowerCase();
-  }
 
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) {
-    return NextResponse.json({ error: "Supabase belum dikonfigurasi." }, { status: 503 });
-  }
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error || !data.user) {
-    registerLoginFailure(rateKey);
-    const message = mode === "anggota" ? "NIK atau password salah." : "Email atau password salah.";
-    return NextResponse.json({ error: message }, { status: 401 });
-  }
-
-  // Valid credentials — never keep this IP throttled.
-  clearLoginFailures(rateKey);
-
-  const admin = createSupabaseAdminClient();
-  if (!admin) {
-    await supabase.auth.signOut();
-    return NextResponse.json({ error: "Service role Supabase belum dikonfigurasi." }, { status: 503 });
-  }
-
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("id, role")
-    .eq("auth_user_id", data.user.id)
-    .maybeSingle();
-
-  if (!profile) {
-    await supabase.auth.signOut();
-    return NextResponse.json(
-      { error: "Profil akun belum dibuat. Jalankan seed atau hubungi admin koperasi." },
-      { status: 403 }
-    );
-  }
-
-  const role = profile.role as Role;
-
-  // Block role mismatch (e.g. admin trying the anggota tab) for a clear UX.
-  if (mode === "admin" && role !== "admin") {
-    await supabase.auth.signOut();
-    return NextResponse.json({ error: "Akun ini bukan akun admin." }, { status: 403 });
-  }
-  if (mode === "anggota" && role !== "anggota") {
-    await supabase.auth.signOut();
-    return NextResponse.json({ error: "Gunakan form login admin untuk akun ini." }, { status: 403 });
-  }
-
-  if (mode === "anggota") {
-    const { data: member } = await admin
-      .from("members")
-      .select("id, status")
-      .eq("profile_id", profile.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-
-    if (!member) {
-      await supabase.auth.signOut();
-      return NextResponse.json(
-        { error: "Akun anggota belum terhubung ke data anggota. Hubungi admin koperasi." },
-        { status: 403 }
-      );
+    if (!profile || !verifyPassword(password, profile.passwordHash)) {
+      registerLoginFailure(rateKey);
+      const message = mode === "anggota" ? "NIK atau password salah." : "Email atau password salah.";
+      return NextResponse.json({ error: message }, { status: 401 });
     }
 
-    if (member.status !== "aktif") {
-      await supabase.auth.signOut();
-      return NextResponse.json({ error: "Akun anggota belum aktif." }, { status: 403 });
-    }
-  }
+    clearLoginFailures(rateKey);
 
-  const redirectTo = safeNext(body.next) ?? DASHBOARD_BY_ROLE[role];
-  return NextResponse.json({ ok: true, redirectTo });
+    const role = profile.role as Role;
+    if (mode === "admin" && role !== "admin") {
+      return NextResponse.json({ error: "Akun ini bukan akun admin." }, { status: 403 });
+    }
+    if (mode === "anggota" && role !== "anggota") {
+      return NextResponse.json({ error: "Gunakan form login admin untuk akun ini." }, { status: 403 });
+    }
+
+    if (mode === "anggota") {
+      if (!profile.member || profile.member.deletedAt) {
+        return NextResponse.json(
+          { error: "Akun anggota belum terhubung ke data anggota. Hubungi admin koperasi." },
+          { status: 403 }
+        );
+      }
+
+      if (profile.member.status !== "aktif") {
+        return NextResponse.json({ error: "Akun anggota belum aktif." }, { status: 403 });
+      }
+    }
+
+    const token = await signSession({
+      profileId: profile.id,
+      role,
+      email: profile.email ?? null,
+      memberId: profile.member?.id ?? null,
+      memberStatus: profile.member?.status ?? null,
+      mustChangePassword: profile.mustChangePassword
+    });
+
+    const redirectTo = safeNext(body.next) ?? DASHBOARD_BY_ROLE[role];
+    const response = NextResponse.json({ ok: true, redirectTo });
+    setSessionCookie(response, token);
+    return response;
+  } catch {
+    return NextResponse.json({ error: "Gagal memeriksa akun. Periksa koneksi database MySQL." }, { status: 500 });
+  }
 }

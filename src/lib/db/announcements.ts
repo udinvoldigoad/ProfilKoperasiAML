@@ -1,26 +1,24 @@
 import type { Announcement } from "@/types";
 import { announcements as fallbackAnnouncements } from "@/lib/data";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
-type AnnouncementRow = {
-  id: string;
-  title: string;
-  body: string;
-  category: string;
-  date: string;
-  pinned: boolean;
-};
+function dateOnly(value: Date | string): string {
+  return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
+}
 
-const ANNOUNCEMENT_COLUMNS = "id, title, body, category, date, pinned";
+function dateInput(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
 
-function mapRow(row: AnnouncementRow): Announcement {
+type DbAnnouncement = Awaited<ReturnType<typeof prisma.announcement.findFirst>>;
+
+function mapRow(row: NonNullable<DbAnnouncement>): Announcement {
   return {
     id: row.id,
     title: row.title,
     body: row.body,
     category: row.category,
-    date: row.date,
+    date: dateOnly(row.date),
     pinned: row.pinned
   };
 }
@@ -35,34 +33,28 @@ function sortAnnouncements(list: Announcement[]): Announcement[] {
 
 /** All announcements (admin + public share the same set). Falls back to local seed data. */
 export async function listAnnouncements(): Promise<Announcement[]> {
-  if (!isSupabaseConfigured()) return sortAnnouncements(fallbackAnnouncements);
+  if (!isDatabaseConfigured()) return sortAnnouncements(fallbackAnnouncements);
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return sortAnnouncements(fallbackAnnouncements);
-
-  const { data, error } = await admin
-    .from("announcements")
-    .select(ANNOUNCEMENT_COLUMNS)
-    .order("pinned", { ascending: false })
-    .order("date", { ascending: false });
-
-  if (error || !data) return sortAnnouncements(fallbackAnnouncements);
-  return (data as AnnouncementRow[]).map(mapRow);
+  try {
+    const rows = await prisma.announcement.findMany({ orderBy: [{ pinned: "desc" }, { date: "desc" }] });
+    return rows.map(mapRow);
+  } catch {
+    return sortAnnouncements(fallbackAnnouncements);
+  }
 }
 
-/** Single announcement by id (admin/service role). */
+/** Single announcement by id. */
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
-  if (!isSupabaseConfigured()) {
+  if (!isDatabaseConfigured()) {
     return fallbackAnnouncements.find((item) => item.id === id) ?? null;
   }
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return fallbackAnnouncements.find((item) => item.id === id) ?? null;
-
-  const { data, error } = await admin.from("announcements").select(ANNOUNCEMENT_COLUMNS).eq("id", id).maybeSingle();
-
-  if (error || !data) return null;
-  return mapRow(data as AnnouncementRow);
+  try {
+    const row = await prisma.announcement.findUnique({ where: { id } });
+    return row ? mapRow(row) : null;
+  } catch {
+    return null;
+  }
 }
 
 export type AnnouncementInput = {
@@ -76,42 +68,38 @@ export type AnnouncementInput = {
 export type CreateResult = { ok: true; id: string } | { ok: false; error: string };
 export type MutationResult = { ok: true } | { ok: false; error: string };
 
-function toRow(input: AnnouncementInput) {
-  return {
-    title: input.title,
-    body: input.body,
-    category: input.category,
-    date: input.date,
-    pinned: input.pinned
-  };
-}
-
 export async function createAnnouncement(input: AnnouncementInput): Promise<CreateResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi (DATABASE_URL)." };
 
-  const { data, error } = await admin.from("announcements").insert(toRow(input)).select("id").single();
-
-  if (error || !data) return { ok: false, error: error?.message ?? "Gagal menyimpan pengumuman." };
-  return { ok: true, id: data.id };
+  try {
+    const row = await prisma.announcement.create({
+      data: { ...input, date: dateInput(input.date) },
+      select: { id: true }
+    });
+    return { ok: true, id: row.id };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal menyimpan pengumuman." };
+  }
 }
 
 export async function updateAnnouncement(id: string, input: AnnouncementInput): Promise<MutationResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
-  const { error } = await admin.from("announcements").update(toRow(input)).eq("id", id);
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  try {
+    await prisma.announcement.update({ where: { id }, data: { ...input, date: dateInput(input.date) } });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal memperbarui pengumuman." };
+  }
 }
 
 export async function deleteAnnouncement(id: string): Promise<MutationResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
-  const { error } = await admin.from("announcements").delete().eq("id", id);
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  try {
+    await prisma.announcement.delete({ where: { id } });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal menghapus pengumuman." };
+  }
 }

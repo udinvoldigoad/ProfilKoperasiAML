@@ -4,8 +4,8 @@ import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterCta } from "@/components/auth/register-cta";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { getSiteProfile } from "@/lib/db/settings";
+import { isDatabaseConfigured } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -18,7 +18,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const configured = isSupabaseConfigured();
+  const configured = isDatabaseConfigured();
   const { whatsapp } = await getSiteProfile();
 
   return (
@@ -44,7 +44,7 @@ export default async function LoginPage({
                 <div>
                   <h2 className="text-lg font-bold text-primary">Login belum aktif</h2>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    Backend Supabase belum dikonfigurasi. Hubungi admin untuk mengaktifkan portal admin dan anggota.
+                    Database MySQL Hostinger belum dikonfigurasi. Isi DATABASE_URL dan jalankan seed awal terlebih dahulu.
                   </p>
                 </div>
               </div>

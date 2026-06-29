@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -41,41 +41,45 @@ enum AttendanceMethod {
 }
 
 model Profile {
-  id         String   @id @default(uuid()) @db.Uuid
-  authUserId String?  @unique @map("auth_user_id") @db.Uuid
-  role       Role
-  email      String?
-  phone      String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(uuid()) @db.Char(36)
+  authUserId         String?  @unique @map("auth_user_id") @db.Char(36)
+  role               Role     @default(anggota)
+  email              String?  @db.VarChar(191)
+  phone              String?  @db.VarChar(50)
+  passwordHash       String?  @map("password_hash") @db.VarChar(255)
+  mustChangePassword Boolean  @default(false) @map("must_change_password")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  member     Member?
-  posts      Post[]   @relation("PostAuthor")
-  auditLogs  AuditLog[]
+  member        Member?
+  posts         Post[]     @relation("PostAuthor")
+  auditLogs     AuditLog[]
+  createdEvents Event[]    @relation("EventCreator")
 
+  @@index([role, email])
   @@map("profiles")
 }
 
 model Member {
-  id           String       @id @default(uuid()) @db.Uuid
-  profileId    String?      @unique @map("profile_id") @db.Uuid
-  memberNumber String       @map("member_number")
-  fullName     String       @map("full_name")
-  nik          String       @unique
-  birthPlace   String       @map("birth_place")
+  id           String       @id @default(uuid()) @db.Char(36)
+  profileId    String?      @unique @map("profile_id") @db.Char(36)
+  memberNumber String       @map("member_number") @db.VarChar(50)
+  fullName     String       @map("full_name") @db.VarChar(191)
+  nik          String       @unique @db.VarChar(16)
+  birthPlace   String       @map("birth_place") @db.VarChar(191)
   birthDate    DateTime     @map("birth_date") @db.Date
-  address      String
-  photoUrl     String?      @map("photo_url")
-  email        String?
-  phone        String?
+  address      String       @db.Text
+  photoUrl     String?      @map("photo_url") @db.Text
+  email        String?      @db.VarChar(191)
+  phone        String?      @db.VarChar(50)
   status       MemberStatus @default(aktif)
   memberType   MemberType   @default(anggota_lama) @map("member_type")
   deletedAt    DateTime?    @map("deleted_at")
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
-  profile      Profile?     @relation(fields: [profileId], references: [id])
-  attendances  Attendance[]
+  profile     Profile?     @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  attendances Attendance[]
 
   @@unique([memberType, memberNumber])
   @@index([status, memberType])
@@ -84,21 +88,22 @@ model Member {
 }
 
 model Event {
-  id          String      @id @default(uuid()) @db.Uuid
-  title       String
+  id          String      @id @default(uuid()) @db.Char(36)
+  title       String      @db.VarChar(191)
   date        DateTime    @db.Date
-  startTime   String      @map("start_time")
-  endTime     String      @map("end_time")
-  location    String
-  description String
+  startTime   String      @map("start_time") @db.VarChar(5)
+  endTime     String      @map("end_time") @db.VarChar(5)
+  location    String      @db.VarChar(191)
+  description String      @db.Text
   status      EventStatus @default(draft)
-  qrToken     String?     @unique @map("qr_token")
+  qrToken     String?     @unique @map("qr_token") @db.VarChar(191)
   qrExpiresAt DateTime?   @map("qr_expires_at")
-  createdBy   String?     @map("created_by") @db.Uuid
+  createdBy   String?     @map("created_by") @db.Char(36)
   deletedAt   DateTime?   @map("deleted_at")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
+  creator     Profile?     @relation("EventCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   attendances Attendance[]
 
   @@index([status, date])
@@ -107,30 +112,44 @@ model Event {
 }
 
 model Attendance {
-  id         String           @id @default(uuid()) @db.Uuid
-  eventId    String           @map("event_id") @db.Uuid
-  memberId   String           @map("member_id") @db.Uuid
+  id         String           @id @default(uuid()) @db.Char(36)
+  eventId    String           @map("event_id") @db.Char(36)
+  memberId   String           @map("member_id") @db.Char(36)
   attendedAt DateTime         @default(now()) @map("attended_at")
   method     AttendanceMethod @default(qr_code)
-  userAgent  String?          @map("user_agent")
-  ipAddress  String?          @map("ip_address")
+  userAgent  String?          @map("user_agent") @db.Text
+  ipAddress  String?          @map("ip_address") @db.VarChar(100)
   createdAt  DateTime         @default(now()) @map("created_at")
 
-  event      Event            @relation(fields: [eventId], references: [id], onDelete: Restrict)
-  member     Member           @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Restrict)
 
   @@unique([eventId, memberId])
   @@index([memberId])
   @@map("attendances")
 }
 
+model Announcement {
+  id        String   @id @default(uuid()) @db.Char(36)
+  title     String   @db.VarChar(191)
+  body      String   @db.Text
+  category  String   @db.VarChar(100)
+  date      DateTime @db.Date
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([pinned, date])
+  @@map("announcements")
+}
+
 model BoardMember {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  position  String
-  photoUrl  String?  @map("photo_url")
-  contact   String?
-  period    String?
+  id        String   @id @default(uuid()) @db.Char(36)
+  name      String   @db.VarChar(191)
+  position  String   @db.VarChar(191)
+  photoUrl  String?  @map("photo_url") @db.Text
+  contact   String?  @db.VarChar(50)
+  period    String?  @db.VarChar(100)
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -139,12 +158,12 @@ model BoardMember {
 }
 
 model Product {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String
-  description String
-  imageUrl    String?  @map("image_url")
-  category    String
-  status      String   @default("aktif")
+  id          String   @id @default(uuid()) @db.Char(36)
+  title       String   @db.VarChar(191)
+  description String   @db.Text
+  imageUrl    String?  @map("image_url") @db.Text
+  category    String   @db.VarChar(100)
+  status      String   @default("aktif") @db.VarChar(50)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -152,46 +171,46 @@ model Product {
 }
 
 model Post {
-  id           String        @id @default(uuid()) @db.Uuid
-  title        String
-  slug         String        @unique
-  thumbnailUrl String?       @map("thumbnail_url")
-  content      String
-  authorId     String?       @map("author_id") @db.Uuid
+  id           String        @id @default(uuid()) @db.Char(36)
+  title        String        @db.VarChar(191)
+  slug         String        @unique @db.VarChar(191)
+  thumbnailUrl String?       @map("thumbnail_url") @db.Text
+  content      String        @db.LongText
+  authorId     String?       @map("author_id") @db.Char(36)
   status       PublishStatus @default(draft)
   publishedAt  DateTime?     @map("published_at")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
-  author       Profile?      @relation("PostAuthor", fields: [authorId], references: [id])
+  author Profile? @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@index([status, publishedAt])
   @@map("posts")
 }
 
 model Gallery {
-  id          String   @id @default(uuid()) @db.Uuid
-  title       String
-  imageUrl    String   @map("image_url")
-  description String?
+  id          String    @id @default(uuid()) @db.Char(36)
+  title       String    @db.VarChar(191)
+  imageUrl    String    @map("image_url") @db.Text
+  description String?   @db.Text
   eventDate   DateTime? @map("event_date") @db.Date
-  category    String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  category    String?   @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("gallery")
 }
 
 model Unit {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String
-  type        String
-  address     String
-  latitude    Decimal
-  longitude   Decimal
-  contact     String?
-  description String?
-  status      String   @default("aktif")
+  id          String   @id @default(uuid()) @db.Char(36)
+  name        String   @db.VarChar(191)
+  type        String   @db.VarChar(100)
+  address     String   @db.Text
+  latitude    Decimal  @db.Decimal(10, 7)
+  longitude   Decimal  @db.Decimal(10, 7)
+  contact     String?  @db.VarChar(50)
+  description String?  @db.Text
+  status      String   @default("aktif") @db.VarChar(50)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -199,8 +218,8 @@ model Unit {
 }
 
 model Setting {
-  id        String   @id @default(uuid()) @db.Uuid
-  key       String   @unique
+  id        String   @id @default(uuid()) @db.Char(36)
+  key       String   @unique @db.VarChar(191)
   value     Json
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -209,17 +228,17 @@ model Setting {
 }
 
 model AuditLog {
-  id             String   @id @default(uuid()) @db.Uuid
-  actorProfileId String?  @map("actor_profile_id") @db.Uuid
-  action         String
-  entityType     String   @map("entity_type")
-  entityId       String?  @map("entity_id") @db.Uuid
-  summary        String
+  id             String   @id @default(uuid()) @db.Char(36)
+  actorProfileId String?  @map("actor_profile_id") @db.Char(36)
+  action         String   @db.VarChar(100)
+  entityType     String   @map("entity_type") @db.VarChar(100)
+  entityId       String?  @map("entity_id") @db.Char(36)
+  summary        String   @db.Text
   metadata       Json?
-  ipAddress      String?  @map("ip_address")
+  ipAddress      String?  @map("ip_address") @db.VarChar(100)
   createdAt      DateTime @default(now()) @map("created_at")
 
-  actor          Profile? @relation(fields: [actorProfileId], references: [id])
+  actor Profile? @relation(fields: [actorProfileId], references: [id], onDelete: SetNull)
 
   @@index([action, entityType])
   @@index([createdAt])

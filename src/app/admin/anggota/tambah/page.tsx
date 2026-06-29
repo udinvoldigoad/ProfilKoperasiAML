@@ -7,7 +7,7 @@ export default function TambahAnggotaPage() {
     <div className="mx-auto max-w-4xl">
       <AdminPageHeader
         title="Tambah Anggota"
-        description="Submit akan membuat profile, member, dan akun auth anggota di Supabase. Password awal anggota = NIK."
+        description="Submit akan membuat profil login lokal, data anggota, dan password awal anggota = NIK."
       />
       <Card>
         <MemberForm />

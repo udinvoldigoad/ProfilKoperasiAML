@@ -7,8 +7,9 @@ Website profil dan sistem manajemen anggota untuk Koperasi Agro Mulyo Lestari, D
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Supabase PostgreSQL/Auth
-- Prisma schema
+- Hostinger Managed Node.js
+- MySQL via Prisma
+- Session login lokal dengan cookie bertanda tangan
 - QR generation dan scanner kamera web app
 - Import/export Excel dengan `exceljs`
 
@@ -25,14 +26,13 @@ Buka:
 http://localhost:3000
 ```
 
-Portal admin dan anggota membutuhkan konfigurasi Supabase di `.env.local`.
+Portal admin dan anggota membutuhkan `DATABASE_URL` MySQL di `.env.local`.
 
 ## Login
 
-- Admin: memakai akun admin Supabase.
-- Anggota: memakai NIK 16 digit + password.
-
-Supabase Auth secara teknis tetap membutuhkan email/phone sebagai identifier internal. Untuk anggota, UI tetap hanya menampilkan NIK; route login mengubah NIK menjadi identifier internal memakai helper `memberNikToAuthEmail()` di `src/lib/auth-identifiers.ts`.
+- Admin: email + password dari seed awal.
+- Anggota: NIK 16 digit + password.
+- Password awal anggota = NIK dan anggota wajib mengganti password saat login pertama.
 
 ## Halaman Utama
 
@@ -41,15 +41,38 @@ Supabase Auth secara teknis tetap membutuhkan email/phone sebagai identifier int
 - Anggota: `/anggota/dashboard`, `/anggota/profil`, `/anggota/acara`, `/anggota/riwayat-kehadiran`
 - Presensi: `/presensi/scan`
 
-## Supabase
+## Hostinger MySQL
 
-1. Buat project Supabase.
-2. Jalankan SQL di `supabase/schema.sql`.
-3. Isi `.env.local` dari konfigurasi Supabase.
-4. Buat akun admin lewat Supabase Auth.
-5. Tambahkan row `profiles` dengan role `admin` untuk user tersebut.
+1. Buat database MySQL di hPanel Hostinger.
+2. Isi `.env.local` atau env production:
 
-Jika database lama sudah pernah memakai `member_number unique`, jalankan migration di `supabase/migrations/20260629_member_number_per_type.sql` agar nomor anggota bisa dimulai dari 1 untuk anggota lama dan anggota baru secara terpisah.
+```env
+DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DATABASE"
+AUTH_SECRET="isi-string-acak-panjang"
+SEED_SECRET="isi-secret-seed"
+SEED_ADMIN_EMAIL="admin@agrimulyolestari.id"
+SEED_ADMIN_PASSWORD="password-admin-awal"
+```
+
+3. Generate Prisma client:
+
+```bash
+npm run prisma:generate
+```
+
+4. Buat tabel dari schema Prisma:
+
+```bash
+npx prisma db push
+```
+
+5. Jalankan seed awal:
+
+```bash
+curl -X POST https://domain-anda.id/api/admin/seed -H "x-seed-secret: isi-secret-seed"
+```
+
+Setelah seed berhasil, hapus atau kosongkan `SEED_SECRET` dan `SEED_ADMIN_PASSWORD` dari environment production.
 
 ## Database
 
@@ -73,7 +96,7 @@ Format Excel desa yang didukung:
 No | Nama Anggota | No Anggota | NIK | Tempat Lahir | Tanggal Lahir | Alamat | No HP
 ```
 
-Kolom `Email` dan `Tipe/Jenis Anggota` boleh ditambahkan. Jika tipe tidak ada, sistem mencoba membaca sheet bantu dengan heading `nama anggota baru` atau `nama pendiri`. NIK tetap wajib 16 digit karena login anggota memakai NIK.
+Kolom `Email` dan `Tipe/Jenis Anggota` boleh ditambahkan. Jika tipe tidak ada, sistem membaca warna baris: highlight kuning = anggota lama, tanpa highlight = anggota baru. NIK tetap wajib 16 digit karena login anggota memakai NIK.
 
 ## Catatan Implementasi
 
@@ -81,14 +104,15 @@ Kolom `Email` dan `Tipe/Jenis Anggota` boleh ditambahkan. Jika tipe tidak ada, s
 - Timestamp disimpan UTC dan ditampilkan WIB.
 - Soft delete dipakai untuk anggota dan acara.
 - Riwayat presensi tidak ikut terhapus.
-- Admin reset password anggota dilakukan manual.
+- Admin reset password anggota mengembalikan password ke NIK.
 - Nomor anggota unik per tipe anggota, bukan global.
 - Export data admin menggunakan Excel `.xlsx`.
+- File upload produksi sebaiknya disimpan di storage/folder hosting, sedangkan MySQL hanya menyimpan path file.
 
 ## Backup
 
-Untuk produksi, aktifkan backup Supabase sesuai plan yang dipilih. Jika memakai plan tanpa backup lanjutan, lakukan export berkala:
+Untuk produksi di Hostinger, lakukan backup berkala:
 
-- Export database PostgreSQL.
-- Export file dari storage yang dipakai.
+- Export database MySQL dari hPanel/phpMyAdmin.
+- Backup folder upload dari file manager/FTP.
 - Simpan salinan di akun desa/koperasi, bukan akun pribadi mahasiswa KKN.

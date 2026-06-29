@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { getMiddlewareSession } from "@/lib/supabase/middleware";
+import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
 function loginRedirect(request: NextRequest) {
   const url = request.nextUrl.clone();
@@ -21,30 +20,25 @@ export async function middleware(request: NextRequest) {
   const isAdminArea = pathname.startsWith("/admin");
   const isMemberArea = pathname.startsWith("/anggota") || pathname === "/presensi/scan";
 
-  if (!isSupabaseConfigured()) {
+  const claims = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
+  if (!claims) {
     return loginRedirect(request);
   }
 
-  const { response, user, role, mustChangePassword } = await getMiddlewareSession(request);
-
-  if (!user) {
-    return loginRedirect(request);
-  }
-
-  if (isAdminArea && role !== "admin") {
+  if (isAdminArea && claims.role !== "admin") {
     return dashboardRedirect(request, "/anggota/dashboard");
   }
 
-  if (isMemberArea && role !== "anggota") {
+  if (isMemberArea && claims.role !== "anggota") {
     return dashboardRedirect(request, "/admin/dashboard");
   }
 
   const changePasswordPath = "/anggota/ganti-password";
-  if (role === "anggota" && mustChangePassword && pathname !== changePasswordPath) {
+  if (claims.role === "anggota" && claims.mustChangePassword && pathname !== changePasswordPath) {
     return dashboardRedirect(request, changePasswordPath);
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

@@ -1,32 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { parseQrToken, resolveEventStatus } from "@/lib/utils";
-
-type EventRow = {
-  id: string;
-  title: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  status: "draft" | "aktif" | "selesai" | "dibatalkan";
-  qr_expires_at: string | null;
-};
-
-type MemberRow = {
-  id: string;
-  full_name: string;
-  status: string;
-};
 
 function getClientIp(request: NextRequest) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip");
 }
 
-function isExpired(value: string | null) {
+function isExpired(value: Date | null) {
   if (!value) return false;
-  const expiry = new Date(value).getTime();
+  const expiry = value.getTime();
   return Number.isFinite(expiry) && expiry < Date.now();
+}
+
+function dateOnly(value: Date | string): string {
+  return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
 }
 
 export async function POST(request: NextRequest) {
@@ -49,77 +37,63 @@ export async function POST(request: NextRequest) {
   if (session.member.status !== "aktif") {
     return NextResponse.json({ ok: false, message: "Akun anggota belum aktif untuk melakukan presensi." }, { status: 403 });
   }
-  const supabase = createSupabaseAdminClient();
-  if (!supabase) {
+
+  if (!isDatabaseConfigured()) {
     return NextResponse.json(
-      { ok: false, message: "Service role Supabase belum dikonfigurasi, presensi belum bisa disimpan." },
+      { ok: false, message: "Database MySQL belum dikonfigurasi, presensi belum bisa disimpan." },
       { status: 503 }
     );
   }
 
-  const { data: event, error: eventError } = await supabase
-    .from("events")
-    .select("id, title, date, start_time, end_time, status, qr_expires_at")
-    .eq("qr_token", token)
-    .is("deleted_at", null)
-    .maybeSingle<EventRow>();
+  try {
+    const event = await prisma.event.findFirst({ where: { qrToken: token, deletedAt: null } });
 
-  if (eventError) {
-    return NextResponse.json({ ok: false, message: "Gagal memvalidasi QR Code." }, { status: 500 });
-  }
+    if (!event) {
+      return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
+    }
 
-  if (!event) {
-    return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
-  }
+    const eventDate = dateOnly(event.date);
+    const effectiveStatus = resolveEventStatus(eventDate, event.startTime.slice(0, 5), event.endTime.slice(0, 5), event.status);
+    if (effectiveStatus !== "aktif" || isExpired(event.qrExpiresAt)) {
+      return NextResponse.json({ ok: false, message: "Presensi belum dibuka atau acara sudah selesai." }, { status: 400 });
+    }
 
-  const effectiveStatus = resolveEventStatus(event.date, event.start_time?.slice(0, 5), event.end_time?.slice(0, 5), event.status);
-  if (effectiveStatus !== "aktif" || isExpired(event.qr_expires_at)) {
-    return NextResponse.json({ ok: false, message: "Presensi belum dibuka atau acara sudah selesai." }, { status: 400 });
-  }
+    const member = await prisma.member.findFirst({
+      where: { id: session.member.id, deletedAt: null },
+      select: { id: true, fullName: true, status: true }
+    });
 
-  const { data: member, error: memberError } = await supabase
-    .from("members")
-    .select("id, full_name, status")
-    .eq("id", session.member.id)
-    .is("deleted_at", null)
-    .maybeSingle<MemberRow>();
+    if (!member || member.status !== "aktif") {
+      return NextResponse.json({ ok: false, message: "Akun anggota belum aktif untuk melakukan presensi." }, { status: 403 });
+    }
 
-  if (memberError) {
-    return NextResponse.json({ ok: false, message: "Gagal memvalidasi anggota." }, { status: 500 });
-  }
+    const attendance = await prisma.attendance.create({
+      data: {
+        eventId: event.id,
+        memberId: member.id,
+        attendedAt: new Date(),
+        method: "qr_code",
+        userAgent: request.headers.get("user-agent"),
+        ipAddress: getClientIp(request)
+      }
+    });
 
-  if (!member || member.status !== "aktif") {
-    return NextResponse.json({ ok: false, message: "Akun anggota belum aktif untuk melakukan presensi." }, { status: 403 });
-  }
+    return NextResponse.json({
+      ok: true,
+      message: `Presensi berhasil dicatat untuk ${event.title}. Terima kasih, ${member.fullName}.`,
+      result: {
+        eventTitle: event.title,
+        memberName: member.fullName,
+        attendedAt: attendance.attendedAt.toISOString(),
+        method: "QR Code"
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (/Unique constraint|duplicate|P2002/i.test(message)) {
+      return NextResponse.json({ ok: false, message: "Anda sudah melakukan presensi pada acara ini." }, { status: 409 });
+    }
 
-  const attendedAt = new Date().toISOString();
-  const { error: attendanceError } = await supabase.from("attendances").insert({
-    event_id: event.id,
-    member_id: member.id,
-    attended_at: attendedAt,
-    method: "qr_code",
-    user_agent: request.headers.get("user-agent"),
-    ip_address: getClientIp(request)
-  });
-
-  if (attendanceError?.code === "23505") {
-    return NextResponse.json({ ok: false, message: "Anda sudah melakukan presensi pada acara ini." }, { status: 409 });
-  }
-
-  if (attendanceError) {
     return NextResponse.json({ ok: false, message: "Gagal menyimpan presensi. Silakan coba lagi." }, { status: 500 });
   }
-
-  return NextResponse.json({
-    ok: true,
-    message: `Presensi berhasil dicatat untuk ${event.title}. Terima kasih, ${member.full_name}.`,
-    result: {
-      eventTitle: event.title,
-      memberName: member.full_name,
-      attendedAt,
-      method: "QR Code"
-    }
-  });
 }
-
-

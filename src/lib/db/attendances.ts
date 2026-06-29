@@ -1,6 +1,5 @@
 import { attendances as fallbackAttendances, events as fallbackEvents } from "@/lib/data";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { wibMonthStartUtc } from "@/lib/utils";
 
 export type MemberAttendance = {
@@ -11,12 +10,9 @@ export type MemberAttendance = {
   eventDate: string | null;
 };
 
-type AttendanceRow = {
-  id: string;
-  attended_at: string;
-  method: "qr_code" | "manual";
-  events: { title: string; date: string } | null;
-};
+function dateOnly(value: Date | string): string {
+  return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
+}
 
 function fallbackAttendancesFor(memberId: string): MemberAttendance[] {
   return fallbackAttendances
@@ -33,50 +29,40 @@ function fallbackAttendancesFor(memberId: string): MemberAttendance[] {
     });
 }
 
-/**
- * Attendance history for one member, newest first, joined with the event title
- * and date. Uses the service role with a server-trusted member id (from the
- * verified session), so it does not depend on the attendance RLS policy.
- */
+/** Attendance history for one member, newest first. */
 export async function listMemberAttendances(memberId: string): Promise<MemberAttendance[]> {
-  if (!isSupabaseConfigured()) return fallbackAttendancesFor(memberId);
+  if (!isDatabaseConfigured()) return fallbackAttendancesFor(memberId);
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return fallbackAttendancesFor(memberId);
+  try {
+    const rows = await prisma.attendance.findMany({
+      where: { memberId },
+      include: { event: { select: { title: true, date: true } } },
+      orderBy: { attendedAt: "desc" }
+    });
 
-  const { data, error } = await admin
-    .from("attendances")
-    .select("id, attended_at, method, events(title, date)")
-    .eq("member_id", memberId)
-    .order("attended_at", { ascending: false });
-
-  if (error || !data) return [];
-
-  return (data as unknown as AttendanceRow[]).map((row) => ({
-    id: row.id,
-    attendedAt: row.attended_at,
-    method: row.method,
-    eventTitle: row.events?.title ?? "Acara koperasi",
-    eventDate: row.events?.date ?? null
-  }));
+    return rows.map((row) => ({
+      id: row.id,
+      attendedAt: row.attendedAt.toISOString(),
+      method: row.method,
+      eventTitle: row.event?.title ?? "Acara koperasi",
+      eventDate: row.event?.date ? dateOnly(row.event.date) : null
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /** Number of attendance records logged in the current calendar month. */
 export async function countAttendancesThisMonth(): Promise<number> {
   const startOfMonth = wibMonthStartUtc();
 
-  if (!isSupabaseConfigured()) {
+  if (!isDatabaseConfigured()) {
     return fallbackAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;
   }
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return 0;
-
-  const { count, error } = await admin
-    .from("attendances")
-    .select("id", { count: "exact", head: true })
-    .gte("attended_at", startOfMonth);
-
-  if (error) return 0;
-  return count ?? 0;
+  try {
+    return await prisma.attendance.count({ where: { attendedAt: { gte: new Date(startOfMonth) } } });
+  } catch {
+    return 0;
+  }
 }

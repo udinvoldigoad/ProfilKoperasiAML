@@ -1,40 +1,33 @@
 import type { Event, EventStatus } from "@/types";
 import { attendances as fallbackAttendances, events as fallbackEvents, members as fallbackMembers } from "@/lib/data";
 import { eventEndToUtc, resolveEventStatus } from "@/lib/utils";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
-type EventRow = {
-  id: string;
-  title: string;
-  date: string;
-  start_time: string;
-  end_time: string;
-  location: string;
-  description: string | null;
-  status: EventStatus;
-  qr_token: string;
-  qr_expires_at: string;
-};
+function dateOnly(value: Date | string): string {
+  return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
+}
 
-const EVENT_COLUMNS =
-  "id, title, date, start_time, end_time, location, description, status, qr_token, qr_expires_at";
+function dateInput(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
 
-function mapEventRow(row: EventRow): Event {
-  const startTime = row.start_time?.slice(0, 5) ?? row.start_time;
-  const endTime = row.end_time?.slice(0, 5) ?? row.end_time;
+type DbEvent = Awaited<ReturnType<typeof prisma.event.findFirst>>;
+
+function mapEventRow(row: NonNullable<DbEvent>): Event {
+  const date = dateOnly(row.date);
+  const startTime = row.startTime?.slice(0, 5) ?? row.startTime;
+  const endTime = row.endTime?.slice(0, 5) ?? row.endTime;
   return {
     id: row.id,
     title: row.title,
-    date: row.date,
+    date,
     startTime,
     endTime,
     location: row.location,
     description: row.description ?? "",
-    // Status follows the schedule automatically; only "dibatalkan" stays manual.
-    status: resolveEventStatus(row.date, startTime, endTime, row.status),
-    qrToken: row.qr_token,
-    qrExpiresAt: row.qr_expires_at
+    status: resolveEventStatus(date, startTime, endTime, row.status) as EventStatus,
+    qrToken: row.qrToken ?? "",
+    qrExpiresAt: row.qrExpiresAt?.toISOString() ?? ""
   };
 }
 
@@ -44,7 +37,7 @@ function newQrToken() {
 
 /** Re-derives time-based status for fallback events so local data matches DB behaviour. */
 function resolveFallbackStatus(event: Event): Event {
-  return { ...event, status: resolveEventStatus(event.date, event.startTime, event.endTime, event.status) };
+  return { ...event, status: resolveEventStatus(event.date, event.startTime, event.endTime, event.status) as EventStatus };
 }
 
 function fallbackEventsResolved(): Event[] {
@@ -53,43 +46,32 @@ function fallbackEventsResolved(): Event[] {
 
 /** All events (admin view, includes draft/selesai), newest date first. */
 export async function listEvents(): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return fallbackEventsResolved();
+  if (!isDatabaseConfigured()) return fallbackEventsResolved();
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return fallbackEventsResolved();
-
-  const { data, error } = await admin
-    .from("events")
-    .select(EVENT_COLUMNS)
-    .is("deleted_at", null)
-    .order("date", { ascending: false });
-
-  if (error || !data) return fallbackEventsResolved();
-  return (data as EventRow[]).map(mapEventRow);
+  try {
+    const rows = await prisma.event.findMany({
+      where: { deletedAt: null },
+      orderBy: { date: "desc" }
+    });
+    return rows.map(mapEventRow);
+  } catch {
+    return fallbackEventsResolved();
+  }
 }
 
 /** Single event by id (admin/service role). */
 export async function getEvent(id: string): Promise<Event | null> {
-  if (!isSupabaseConfigured()) {
+  if (!isDatabaseConfigured()) {
     const found = fallbackEvents.find((event) => event.id === id);
     return found ? resolveFallbackStatus(found) : null;
   }
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) {
-    const found = fallbackEvents.find((event) => event.id === id);
-    return found ? resolveFallbackStatus(found) : null;
+  try {
+    const row = await prisma.event.findFirst({ where: { id, deletedAt: null } });
+    return row ? mapEventRow(row) : null;
+  } catch {
+    return null;
   }
-
-  const { data, error } = await admin
-    .from("events")
-    .select(EVENT_COLUMNS)
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return mapEventRow(data as EventRow);
 }
 
 export type EventInput = {
@@ -107,94 +89,84 @@ export type MutationResult = { ok: true } | { ok: false; error: string };
 
 /** Creates an event with a fresh random QR token and computed expiry (WIB to UTC). */
 export async function createEvent(input: EventInput, createdBy?: string): Promise<CreateEventResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi (DATABASE_URL)." };
 
-  const { data, error } = await admin
-    .from("events")
-    .insert({
-      title: input.title,
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      location: input.location,
-      description: input.description ?? null,
-      status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status),
-      qr_token: newQrToken(),
-      qr_expires_at: eventEndToUtc(input.date, input.endTime),
-      created_by: createdBy ?? null
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) return { ok: false, error: error?.message ?? "Gagal menyimpan acara." };
-  return { ok: true, id: data.id };
+  try {
+    const event = await prisma.event.create({
+      data: {
+        title: input.title,
+        date: dateInput(input.date),
+        startTime: input.startTime,
+        endTime: input.endTime,
+        location: input.location,
+        description: input.description ?? "",
+        status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status) as EventStatus,
+        qrToken: newQrToken(),
+        qrExpiresAt: new Date(eventEndToUtc(input.date, input.endTime)),
+        createdBy: createdBy ?? null
+      },
+      select: { id: true }
+    });
+    return { ok: true, id: event.id };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal menyimpan acara." };
+  }
 }
 
 /** Updates an event. QR expiry is recomputed from the (possibly new) date/end time. */
 export async function updateEvent(id: string, input: EventInput): Promise<MutationResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
-  const { error } = await admin
-    .from("events")
-    .update({
-      title: input.title,
-      date: input.date,
-      start_time: input.startTime,
-      end_time: input.endTime,
-      location: input.location,
-      description: input.description ?? null,
-      status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status),
-      qr_expires_at: eventEndToUtc(input.date, input.endTime)
-    })
-    .eq("id", id)
-    .is("deleted_at", null);
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  try {
+    await prisma.event.update({
+      where: { id },
+      data: {
+        title: input.title,
+        date: dateInput(input.date),
+        startTime: input.startTime,
+        endTime: input.endTime,
+        location: input.location,
+        description: input.description ?? "",
+        status: resolveEventStatus(input.date, input.startTime, input.endTime, input.status) as EventStatus,
+        qrExpiresAt: new Date(eventEndToUtc(input.date, input.endTime))
+      }
+    });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal memperbarui acara." };
+  }
 }
 
-/**
- * Cancels or reinstates an event. Cancelling sets the terminal "dibatalkan" status;
- * reinstating recomputes the schedule-based status from the event's own date/time.
- */
+/** Cancels or reinstates an event. */
 export async function setEventCancelled(id: string, cancelled: boolean): Promise<MutationResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
-  let nextStatus: EventStatus = "dibatalkan";
-  if (!cancelled) {
-    const { data, error } = await admin
-      .from("events")
-      .select("date, start_time, end_time")
-      .eq("id", id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (error || !data) return { ok: false, error: error?.message ?? "Acara tidak ditemukan." };
-    const row = data as { date: string; start_time: string; end_time: string };
-    nextStatus = resolveEventStatus(row.date, row.start_time?.slice(0, 5), row.end_time?.slice(0, 5));
+  try {
+    let nextStatus: EventStatus = "dibatalkan";
+    if (!cancelled) {
+      const event = await prisma.event.findFirst({ where: { id, deletedAt: null } });
+      if (!event) return { ok: false, error: "Acara tidak ditemukan." };
+      const date = dateOnly(event.date);
+      nextStatus = resolveEventStatus(date, event.startTime.slice(0, 5), event.endTime.slice(0, 5)) as EventStatus;
+    }
+
+    await prisma.event.update({ where: { id }, data: { status: nextStatus } });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal mengubah status acara." };
   }
-
-  const { error } = await admin.from("events").update({ status: nextStatus }).eq("id", id).is("deleted_at", null);
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
 }
 
 /** Soft-deletes an event. */
 export async function softDeleteEvent(id: string): Promise<MutationResult> {
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: "Service role belum dikonfigurasi." };
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
-  const { error } = await admin
-    .from("events")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id)
-    .is("deleted_at", null);
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+  try {
+    await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal menghapus acara." };
+  }
 }
 
 export type EventAttendanceRow = {
@@ -205,15 +177,9 @@ export type EventAttendanceRow = {
   attendedAt: string | null;
 };
 
-type AttendanceRow = { member_id: string; attended_at: string };
-type MemberLite = { id: string; member_number: string; full_name: string; nik: string };
-
-/**
- * Active members with their attendance status for one event (present + absent),
- * sorted by member number. Used by the event detail summary and presensi report.
- */
+/** Active members with their attendance status for one event (present + absent). */
 export async function getEventAttendanceRows(eventId: string): Promise<EventAttendanceRow[]> {
-  if (!isSupabaseConfigured()) {
+  if (!isDatabaseConfigured()) {
     return fallbackMembers
       .filter((member) => member.status === "aktif")
       .map((member) => {
@@ -228,27 +194,29 @@ export async function getEventAttendanceRows(eventId: string): Promise<EventAtte
       });
   }
 
-  const admin = createSupabaseAdminClient();
-  if (!admin) return [];
+  try {
+    const [members, attendances] = await Promise.all([
+      prisma.member.findMany({
+        where: { status: "aktif", deletedAt: null },
+        select: { id: true, memberNumber: true, fullName: true, nik: true },
+        orderBy: [{ memberType: "asc" }, { memberNumber: "asc" }]
+      }),
+      prisma.attendance.findMany({
+        where: { eventId },
+        select: { memberId: true, attendedAt: true }
+      })
+    ]);
 
-  const [{ data: members }, { data: attendanceData }] = await Promise.all([
-    admin
-      .from("members")
-      .select("id, member_number, full_name, nik")
-      .eq("status", "aktif")
-      .is("deleted_at", null)
-      .order("member_number", { ascending: true }),
-    admin.from("attendances").select("member_id, attended_at").eq("event_id", eventId)
-  ]);
+    const attendedAtByMember = new Map(attendances.map((row) => [row.memberId, row.attendedAt.toISOString()]));
 
-  if (!members) return [];
-  const attendedAtByMember = new Map((attendanceData as AttendanceRow[] | null)?.map((row) => [row.member_id, row.attended_at]) ?? []);
-
-  return (members as MemberLite[]).map((member) => ({
-    memberId: member.id,
-    memberNumber: member.member_number,
-    fullName: member.full_name,
-    nik: member.nik,
-    attendedAt: attendedAtByMember.get(member.id) ?? null
-  }));
+    return members.map((member) => ({
+      memberId: member.id,
+      memberNumber: member.memberNumber,
+      fullName: member.fullName,
+      nik: member.nik,
+      attendedAt: attendedAtByMember.get(member.id) ?? null
+    }));
+  } catch {
+    return [];
+  }
 }

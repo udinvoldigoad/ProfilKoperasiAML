@@ -1,193 +1,207 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { memberNikToAuthEmail } from "@/lib/auth-identifiers";
-import { events, members, siteProfile } from "@/lib/data";
-import type { Role } from "@/lib/auth-roles";
+import { announcements, events, members, siteProfile } from "@/lib/data";
+import { hashPassword } from "@/lib/passwords";
+import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
-type SupabaseAdmin = NonNullable<ReturnType<typeof createSupabaseAdminClient>>;
-type AuthUser = { id: string; email?: string | null };
+export const runtime = "nodejs";
 
-type EnsureAuthResult =
-  | { ok: true; user: AuthUser; created: boolean }
-  | { ok: false; error: string };
+function dateInput(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
 
 /**
- * One-time seeding for real auth. Creates the admin auth user, one auth user per
- * initial members (NIK-based email), matching profiles/members rows, and initial events
- * so QR tokens shown in admin can be validated against Supabase.
+ * One-time MySQL seeding for Hostinger.
  *
  *   POST /api/admin/seed   header: x-seed-secret: <SEED_SECRET>
  *
- * Default member password = their NIK (admin should require a reset later).
- * Existing auth users are linked without changing their password.
  * Admin credentials come from SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD.
+ * Default member password = NIK and must be changed on first login.
  */
-async function findAuthUserByEmail(supabase: SupabaseAdmin, email: string) {
-  const normalized = email.toLowerCase();
-
-  for (let page = 1; page <= 10; page += 1) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) return { user: null, error: error.message };
-
-    const user = data.users.find((item) => item.email?.toLowerCase() === normalized);
-    if (user) return { user: { id: user.id, email: user.email } satisfies AuthUser, error: null };
-    if (data.users.length < 1000) break;
-  }
-
-  return { user: null, error: null };
-}
-
-async function ensureAuthUser(supabase: SupabaseAdmin, email: string, password: string, role: Role): Promise<EnsureAuthResult> {
-  const { data, error } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    app_metadata: { role }
-  });
-
-  if (data?.user) {
-    return { ok: true, user: { id: data.user.id, email: data.user.email }, created: true };
-  }
-
-  if (!error || !/already.*registered|already.*exists|exists|registered/i.test(error.message)) {
-    return { ok: false, error: error?.message ?? "Gagal membuat auth user." };
-  }
-
-  const existing = await findAuthUserByEmail(supabase, email);
-  if (existing.error) return { ok: false, error: existing.error };
-  if (!existing.user) return { ok: false, error: `Auth user ${email} sudah ada, tetapi tidak bisa ditemukan ulang.` };
-
-  return { ok: true, user: existing.user, created: false };
-}
-
 export async function POST(request: NextRequest) {
   const secret = process.env.SEED_SECRET;
   if (!secret || request.headers.get("x-seed-secret") !== secret) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const supabase = createSupabaseAdminClient();
-  if (!supabase) {
-    return NextResponse.json(
-      { error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." },
-      { status: 503 }
-    );
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ error: "DATABASE_URL MySQL belum dikonfigurasi." }, { status: 503 });
   }
 
   const result = {
     admin: "",
     membersCreated: 0,
-    membersLinked: 0,
-    membersSkipped: 0,
+    membersUpdated: 0,
     eventsUpserted: 0,
+    announcementsUpserted: 0,
+    settingsUpserted: false,
     errors: [] as string[]
   };
 
-  // 1. Admin user + profile.
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? siteProfile.email).toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD;
-  let adminProfileId: string | null = null;
-
   if (!adminPassword) {
     return NextResponse.json({ error: "SEED_ADMIN_PASSWORD wajib diisi." }, { status: 400 });
   }
 
-  const adminAuth = await ensureAuthUser(supabase, adminEmail, adminPassword, "admin");
-  if (!adminAuth.ok) {
-    result.errors.push(`admin: ${adminAuth.error}`);
-    result.admin = adminEmail;
-  } else {
-    const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
-      .upsert({ auth_user_id: adminAuth.user.id, role: "admin", email: adminEmail }, { onConflict: "auth_user_id" })
-      .select("id")
-      .single<{ id: string }>();
-
-    if (profileErr || !profile) {
-      result.errors.push(`admin profile: ${profileErr?.message ?? "gagal"}`);
+  try {
+    const existingAdmin = await prisma.profile.findFirst({ where: { role: "admin", email: adminEmail } });
+    if (existingAdmin) {
+      await prisma.profile.update({
+        where: { id: existingAdmin.id },
+        data: { passwordHash: hashPassword(adminPassword), mustChangePassword: false }
+      });
+      result.admin = `${adminEmail} (password diperbarui)`;
     } else {
-      adminProfileId = profile.id;
+      await prisma.profile.create({
+        data: {
+          role: "admin",
+          email: adminEmail,
+          passwordHash: hashPassword(adminPassword),
+          mustChangePassword: false
+        }
+      });
+      result.admin = `${adminEmail} (dibuat)`;
     }
-
-    result.admin = adminAuth.created ? adminEmail : `${adminEmail} (sudah ada, ditautkan ulang)`;
+  } catch (error) {
+    result.errors.push(`admin: ${error instanceof Error ? error.message : "gagal"}`);
   }
 
-  // 2. Member users + profiles + member rows.
   for (const member of members) {
-    const email = memberNikToAuthEmail(member.nik);
-    const auth = await ensureAuthUser(supabase, email, member.nik, "anggota");
+    try {
+      const existing = await prisma.member.findUnique({ where: { nik: member.nik }, include: { profile: true } });
+      if (existing) {
+        const profileId = existing.profileId ?? existing.profile?.id;
+        if (profileId) {
+          await prisma.profile.update({
+            where: { id: profileId },
+            data: {
+              role: "anggota",
+              email: member.email?.toLowerCase() ?? null,
+              phone: member.phone ?? null,
+              passwordHash: hashPassword(member.nik),
+              mustChangePassword: true
+            }
+          });
+        }
 
-    if (!auth.ok) {
-      result.errors.push(`${member.nik}: ${auth.error}`);
-      continue;
+        await prisma.member.update({
+          where: { id: existing.id },
+          data: {
+            memberNumber: member.memberNumber,
+            fullName: member.fullName,
+            birthPlace: member.birthPlace,
+            birthDate: dateInput(member.birthDate),
+            address: member.address,
+            photoUrl: member.photoUrl ?? null,
+            email: member.email ?? null,
+            phone: member.phone ?? null,
+            status: member.status,
+            memberType: member.memberType
+          }
+        });
+        result.membersUpdated += 1;
+      } else {
+        const profile = await prisma.profile.create({
+          data: {
+            role: "anggota",
+            email: member.email?.toLowerCase() ?? null,
+            phone: member.phone ?? null,
+            passwordHash: hashPassword(member.nik),
+            mustChangePassword: true
+          }
+        });
+
+        await prisma.member.create({
+          data: {
+            profileId: profile.id,
+            memberNumber: member.memberNumber,
+            fullName: member.fullName,
+            nik: member.nik,
+            birthPlace: member.birthPlace,
+            birthDate: dateInput(member.birthDate),
+            address: member.address,
+            photoUrl: member.photoUrl ?? null,
+            email: member.email ?? null,
+            phone: member.phone ?? null,
+            status: member.status,
+            memberType: member.memberType
+          }
+        });
+        result.membersCreated += 1;
+      }
+    } catch (error) {
+      result.errors.push(`${member.nik}: ${error instanceof Error ? error.message : "gagal"}`);
     }
-
-    const { data: profile, error: profileErr } = await supabase
-      .from("profiles")
-      .upsert(
-        { auth_user_id: auth.user.id, role: "anggota", email: member.email ?? null, phone: member.phone ?? null },
-        { onConflict: "auth_user_id" }
-      )
-      .select("id")
-      .single<{ id: string }>();
-
-    if (profileErr || !profile) {
-      result.errors.push(`${member.nik} profile: ${profileErr?.message ?? "gagal"}`);
-      continue;
-    }
-
-    const { error: memberErr } = await supabase.from("members").upsert(
-      {
-        profile_id: profile.id,
-        member_number: member.memberNumber,
-        full_name: member.fullName,
-        nik: member.nik,
-        birth_place: member.birthPlace,
-        birth_date: member.birthDate,
-        address: member.address,
-        photo_url: member.photoUrl ?? null,
-        email: member.email ?? null,
-        phone: member.phone ?? null,
-        status: member.status,
-        member_type: member.memberType
-      },
-      { onConflict: "nik" }
-    );
-
-    if (memberErr) {
-      result.errors.push(`${member.nik} member: ${memberErr.message}`);
-      continue;
-    }
-
-    if (auth.created) result.membersCreated += 1;
-    else result.membersLinked += 1;
   }
 
-  // 3. Initial events for QR validation.
   for (const event of events) {
-    const { error } = await supabase.from("events").upsert(
-      {
-        title: event.title,
-        date: event.date,
-        start_time: event.startTime,
-        end_time: event.endTime,
-        location: event.location,
-        description: event.description,
-        status: event.status,
-        qr_token: event.qrToken,
-        qr_expires_at: event.qrExpiresAt,
-        created_by: adminProfileId
-      },
-      { onConflict: "qr_token" }
-    );
-
-    if (error) {
-      result.errors.push(`${event.qrToken} event: ${error.message}`);
-      continue;
+    try {
+      await prisma.event.upsert({
+        where: { qrToken: event.qrToken },
+        update: {
+          title: event.title,
+          date: dateInput(event.date),
+          startTime: event.startTime,
+          endTime: event.endTime,
+          location: event.location,
+          description: event.description,
+          status: event.status,
+          qrExpiresAt: event.qrExpiresAt ? new Date(event.qrExpiresAt) : null
+        },
+        create: {
+          title: event.title,
+          date: dateInput(event.date),
+          startTime: event.startTime,
+          endTime: event.endTime,
+          location: event.location,
+          description: event.description,
+          status: event.status,
+          qrToken: event.qrToken,
+          qrExpiresAt: event.qrExpiresAt ? new Date(event.qrExpiresAt) : null
+        }
+      });
+      result.eventsUpserted += 1;
+    } catch (error) {
+      result.errors.push(`${event.qrToken}: ${error instanceof Error ? error.message : "gagal"}`);
     }
-
-    result.eventsUpserted += 1;
   }
 
-  return NextResponse.json({ ok: true, ...result });
+  for (const announcement of announcements) {
+    try {
+      await prisma.announcement.upsert({
+        where: { id: announcement.id },
+        update: {
+          title: announcement.title,
+          body: announcement.body,
+          category: announcement.category,
+          date: dateInput(announcement.date),
+          pinned: Boolean(announcement.pinned)
+        },
+        create: {
+          id: announcement.id,
+          title: announcement.title,
+          body: announcement.body,
+          category: announcement.category,
+          date: dateInput(announcement.date),
+          pinned: Boolean(announcement.pinned)
+        }
+      });
+      result.announcementsUpserted += 1;
+    } catch (error) {
+      result.errors.push(`${announcement.id}: ${error instanceof Error ? error.message : "gagal"}`);
+    }
+  }
+
+  try {
+    await prisma.setting.upsert({
+      where: { key: "site_profile" },
+      update: { value: siteProfile },
+      create: { key: "site_profile", value: siteProfile }
+    });
+    result.settingsUpserted = true;
+  } catch (error) {
+    result.errors.push(`settings: ${error instanceof Error ? error.message : "gagal"}`);
+  }
+
+  return NextResponse.json({ ok: result.errors.length === 0, ...result });
 }
