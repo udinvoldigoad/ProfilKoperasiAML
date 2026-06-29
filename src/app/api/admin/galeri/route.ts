@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
 import { createGalleryItem } from "@/lib/db/gallery";
 import { GALLERY_ALLOWED_TYPES, GALLERY_MAX_FILE_SIZE, galleryPublicUrl, galleryUploadDirectory } from "@/lib/gallery-storage";
+import { processUploadImageToWebp } from "@/lib/image-upload-processing";
 
 export const runtime = "nodejs";
 
@@ -57,15 +58,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ukuran gambar maksimal 8 MB." }, { status: 400 });
   }
 
-  const ext = GALLERY_ALLOWED_TYPES.get(file.type) ?? "jpg";
-  const filename = `${Date.now()}-${slugPart(title)}-${randomUUID().slice(0, 8)}.${ext}`;
+  let processedImage: Awaited<ReturnType<typeof processUploadImageToWebp>>;
+  try {
+    processedImage = await processUploadImageToWebp(file, { maxWidth: 1920, maxHeight: 1920, quality: 78 });
+  } catch {
+    return NextResponse.json({ error: "Gambar gagal dikompres. Pastikan file gambar tidak rusak." }, { status: 400 });
+  }
+
+  const filename = `${Date.now()}-${slugPart(title)}-${randomUUID().slice(0, 8)}.${processedImage.extension}`;
   const directory = galleryUploadDirectory();
   const filePath = join(directory, filename);
   const imageUrl = galleryPublicUrl(filename);
 
   try {
     await mkdir(directory, { recursive: true });
-    await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+    await writeFile(filePath, processedImage.buffer);
   } catch {
     return NextResponse.json({ error: "Gagal menyimpan file ke storage hosting." }, { status: 500 });
   }

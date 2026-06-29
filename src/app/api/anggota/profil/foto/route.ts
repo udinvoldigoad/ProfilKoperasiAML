@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/auth";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
 import { updateBoardMemberPhotoByName } from "@/lib/db/board-members";
 import { getMemberForSession, updateMemberPhoto } from "@/lib/db/members";
+import { processUploadImageToWebp } from "@/lib/image-upload-processing";
 import {
   PROFILE_PHOTO_ALLOWED_TYPES,
   PROFILE_PHOTO_MAX_FILE_SIZE,
@@ -46,8 +47,14 @@ export async function POST(request: NextRequest) {
   const member = await getMemberForSession(session.member.id);
   if (!member) return NextResponse.json({ error: "Data anggota tidak ditemukan." }, { status: 404 });
 
-  const ext = PROFILE_PHOTO_ALLOWED_TYPES.get(file.type) ?? "jpg";
-  const filename = `${memberSlug(session.member.id)}-${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+  let processedImage: Awaited<ReturnType<typeof processUploadImageToWebp>>;
+  try {
+    processedImage = await processUploadImageToWebp(file, { maxWidth: 960, maxHeight: 960, quality: 80 });
+  } catch {
+    return NextResponse.json({ error: "Foto gagal dikompres. Pastikan file gambar tidak rusak." }, { status: 400 });
+  }
+
+  const filename = `${memberSlug(session.member.id)}-${Date.now()}-${randomUUID().slice(0, 8)}.${processedImage.extension}`;
   const directory = profilePhotoUploadDirectory();
   const filePath = join(directory, filename);
   const photoUrl = profilePhotoPublicUrl(filename);
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await mkdir(directory, { recursive: true });
-    await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+    await writeFile(filePath, processedImage.buffer);
   } catch {
     return NextResponse.json({ error: "Gagal menyimpan foto ke storage hosting." }, { status: 500 });
   }
