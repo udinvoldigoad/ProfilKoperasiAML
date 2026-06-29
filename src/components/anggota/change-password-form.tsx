@@ -1,11 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { useState } from "react";
 
 export function ChangePasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +32,9 @@ export function ChangePasswordForm() {
         setError(data.error ?? "Gagal mengganti password.");
         return;
       }
-      // Changing the password may revoke the current session. Navigate to the
-      // dashboard; if the session was revoked, middleware sends the member to
-      // /login (next=dashboard) and re-login lands them on the dashboard.
-      router.push("/anggota/dashboard");
+      setPassword("");
+      setConfirm("");
+      window.location.replace("/anggota/dashboard");
     } catch {
       setError("Tidak dapat terhubung ke server. Coba lagi.");
     } finally {
@@ -46,10 +43,11 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form className="grid gap-5" onSubmit={handleSubmit}>
+    <form className="grid gap-5" onSubmit={handleSubmit} autoComplete="off">
       <label className="grid gap-2 text-sm font-bold text-primary">
         Password Baru
         <input
+          name="new-password"
           type="password"
           className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
           placeholder="Minimal 8 karakter"
@@ -62,6 +60,7 @@ export function ChangePasswordForm() {
       <label className="grid gap-2 text-sm font-bold text-primary">
         Konfirmasi Password Baru
         <input
+          name="confirm-new-password"
           type="password"
           className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
           placeholder="Ulangi password baru"
