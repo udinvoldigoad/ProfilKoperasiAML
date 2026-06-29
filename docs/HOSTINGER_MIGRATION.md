@@ -9,6 +9,8 @@
 
 - Runtime rekomendasi: Node.js 20.x.
 
+- Prisma memakai library engine bawaan agar tidak kena limit spawn proses di shared hosting.
+
 Jangan simpan gambar sebagai blob di MySQL. Untuk kapasitas 50GB Hostinger, pola yang benar adalah:
 
 ```txt
@@ -104,4 +106,4 @@ Setelah SQL sukses, lanjutkan seed admin lewat endpoint `/api/admin/seed`.
 
 ## Troubleshooting Prisma Hostinger
 
-Jika endpoint seed menampilkan `PANIC: timer has gone away`, gunakan Node.js 20.x lalu deploy ulang commit terbaru. Project ini juga memakai Prisma binary engine agar lebih stabil di shared Node hosting.
+Jika endpoint seed menampilkan `spawn ... query-engine ... EAGAIN`, pastikan Prisma tidak memakai `engineType = "binary"`, deploy ulang commit terbaru, lalu coba seed lagi. Jika muncul `PANIC: timer has gone away`, pastikan runtime Hostinger memakai Node.js 20.x, bukan Node 22/24.
