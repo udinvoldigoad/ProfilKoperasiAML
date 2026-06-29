@@ -1,4 +1,3 @@
-import { attendances as fallbackAttendances, events as fallbackEvents } from "@/lib/data";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { wibMonthStartUtc } from "@/lib/utils";
 
@@ -14,24 +13,9 @@ function dateOnly(value: Date | string): string {
   return typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10);
 }
 
-function fallbackAttendancesFor(memberId: string): MemberAttendance[] {
-  return fallbackAttendances
-    .filter((attendance) => attendance.memberId === memberId)
-    .map((attendance) => {
-      const event = fallbackEvents.find((item) => item.id === attendance.eventId);
-      return {
-        id: attendance.id,
-        attendedAt: attendance.attendedAt,
-        method: attendance.method,
-        eventTitle: event?.title ?? "Acara koperasi",
-        eventDate: event?.date ?? null
-      };
-    });
-}
-
 /** Attendance history for one member, newest first. */
 export async function listMemberAttendances(memberId: string): Promise<MemberAttendance[]> {
-  if (!isDatabaseConfigured()) return fallbackAttendancesFor(memberId);
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const rows = await prisma.attendance.findMany({
@@ -56,9 +40,7 @@ export async function listMemberAttendances(memberId: string): Promise<MemberAtt
 export async function countAttendancesThisMonth(): Promise<number> {
   const startOfMonth = wibMonthStartUtc();
 
-  if (!isDatabaseConfigured()) {
-    return fallbackAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;
-  }
+  if (!isDatabaseConfigured()) return 0;
 
   try {
     return await prisma.attendance.count({ where: { attendedAt: { gte: new Date(startOfMonth) } } });

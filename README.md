@@ -30,7 +30,7 @@ Portal admin dan anggota membutuhkan `DATABASE_URL` MySQL di `.env.local`.
 
 ## Login
 
-- Admin: email + password dari seed awal.
+- Admin: email + password yang sudah dibuat di database produksi.
 - Anggota: NIK 16 digit + password.
 - Password awal anggota = NIK dan anggota wajib mengganti password saat login pertama.
 
@@ -49,9 +49,6 @@ Portal admin dan anggota membutuhkan `DATABASE_URL` MySQL di `.env.local`.
 ```env
 DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DATABASE"
 AUTH_SECRET="isi-string-acak-panjang"
-SEED_SECRET="isi-secret-seed"
-SEED_ADMIN_EMAIL="admin@agrimulyolestari.id"
-SEED_ADMIN_PASSWORD="password-admin-awal"
 ```
 
 3. Generate Prisma client:
@@ -66,13 +63,7 @@ npm run prisma:generate
 npx prisma db push
 ```
 
-5. Jalankan seed awal:
-
-```bash
-curl -X POST https://domain-anda.id/api/admin/seed -H "x-seed-secret: isi-secret-seed"
-```
-
-Setelah seed berhasil, hapus atau kosongkan `SEED_SECRET` dan `SEED_ADMIN_PASSWORD` dari environment production.
+5. Pastikan admin produksi sudah tersedia dan login bisa dilakukan sebelum membuka akses pengguna.
 
 ## Database
 

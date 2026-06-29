@@ -44,7 +44,7 @@ export default async function LoginPage({
                 <div>
                   <h2 className="text-lg font-bold text-primary">Login belum aktif</h2>
                   <p className="mt-2 text-sm text-on-surface-variant">
-                    Database MySQL Hostinger belum dikonfigurasi. Isi DATABASE_URL dan jalankan seed awal terlebih dahulu.
+                    Database MySQL Hostinger belum dikonfigurasi. Isi DATABASE_URL produksi terlebih dahulu.
                   </p>
                 </div>
               </div>

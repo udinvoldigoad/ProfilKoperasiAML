@@ -1,7 +1,6 @@
 export type MemberStatus = "aktif" | "nonaktif" | "ditangguhkan";
 export type MemberType = "anggota_lama" | "anggota_baru";
 export type EventStatus = "draft" | "aktif" | "selesai" | "dibatalkan";
-export type PublishStatus = "draft" | "publish";
 
 export type Member = {
   id: string;
@@ -33,13 +32,6 @@ export type Event = {
   qrExpiresAt: string;
 };
 
-export type Attendance = {
-  id: string;
-  eventId: string;
-  memberId: string;
-  attendedAt: string;
-  method: "qr_code" | "manual";
-};
 
 export type BoardMember = {
   id: string;
@@ -62,18 +54,6 @@ export type Product = {
   status: "aktif" | "nonaktif";
 };
 
-export type Post = {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  thumbnailUrl: string;
-  category: string;
-  author: string;
-  status: PublishStatus;
-  publishedAt: string;
-};
 
 export type GalleryItem = {
   id: string;
@@ -84,19 +64,6 @@ export type GalleryItem = {
   category: string;
 };
 
-export type Unit = {
-  id: string;
-  name: string;
-  type: string;
-  address: string;
-  latitude?: number;
-  longitude?: number;
-  contact?: string;
-  description: string;
-  photoUrl?: string;
-  mapsUrl?: string;
-  status: "aktif" | "nonaktif";
-};
 
 /** One physical location within a unit category (a unit can have several). */
 export type UnitPoint = {

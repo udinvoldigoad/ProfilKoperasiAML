@@ -1,5 +1,4 @@
 import type { Member, MemberStatus, MemberType } from "@/types";
-import { members as fallbackMembers } from "@/lib/data";
 import { hashPassword } from "@/lib/passwords";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
@@ -67,9 +66,9 @@ async function nextMemberNumber(memberType: MemberType) {
   return String(max + 1);
 }
 
-/** All active (non-deleted) members. Falls back to local seed data when unconfigured. */
+/** All active (non-deleted) members from MySQL. */
 export async function listMembers(): Promise<Member[]> {
-  if (!isDatabaseConfigured()) return sortMembers(fallbackMembers);
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const rows = await prisma.member.findMany({
@@ -78,15 +77,13 @@ export async function listMembers(): Promise<Member[]> {
     });
     return sortMembers(rows.map(mapMemberRow));
   } catch {
-    return sortMembers(fallbackMembers);
+    return [];
   }
 }
 
-/** Single member by id. Falls back to local seed data when unconfigured. */
+/** Single member by id from MySQL. */
 export async function getMember(id: string): Promise<Member | null> {
-  if (!isDatabaseConfigured()) {
-    return fallbackMembers.find((member) => member.id === id) ?? null;
-  }
+  if (!isDatabaseConfigured()) return null;
 
   try {
     const row = await prisma.member.findFirst({ where: { id, deletedAt: null } });

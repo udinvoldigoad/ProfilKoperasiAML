@@ -101,7 +101,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value.replace(/\D/g, "").slice(0, 16))}
             className="mt-2 min-h-12 w-full rounded-lg border border-border-subtle px-4"
-            placeholder="1807061204860001"
+            placeholder="16 digit NIK"
             autoComplete="username"
             required
           />
@@ -118,7 +118,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             className="mt-2 min-h-12 w-full rounded-lg border border-border-subtle px-4"
-            placeholder="admin@agrimulyolestari.id"
+            placeholder="email admin"
             autoComplete="username"
             required
           />

@@ -1,5 +1,4 @@
 import type { Announcement } from "@/types";
-import { announcements as fallbackAnnouncements } from "@/lib/data";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
 function dateOnly(value: Date | string): string {
@@ -31,23 +30,21 @@ function sortAnnouncements(list: Announcement[]): Announcement[] {
   });
 }
 
-/** All announcements (admin + public share the same set). Falls back to local seed data. */
+/** All announcements (admin + public share the same set) from MySQL. */
 export async function listAnnouncements(): Promise<Announcement[]> {
-  if (!isDatabaseConfigured()) return sortAnnouncements(fallbackAnnouncements);
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const rows = await prisma.announcement.findMany({ orderBy: [{ pinned: "desc" }, { date: "desc" }] });
     return rows.map(mapRow);
   } catch {
-    return sortAnnouncements(fallbackAnnouncements);
+    return [];
   }
 }
 
 /** Single announcement by id. */
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
-  if (!isDatabaseConfigured()) {
-    return fallbackAnnouncements.find((item) => item.id === id) ?? null;
-  }
+  if (!isDatabaseConfigured()) return null;
 
   try {
     const row = await prisma.announcement.findUnique({ where: { id } });

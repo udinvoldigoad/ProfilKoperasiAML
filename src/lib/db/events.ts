@@ -1,5 +1,4 @@
 import type { Event, EventStatus } from "@/types";
-import { attendances as fallbackAttendances, events as fallbackEvents, members as fallbackMembers } from "@/lib/data";
 import { eventEndToUtc, resolveEventStatus } from "@/lib/utils";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
@@ -35,18 +34,9 @@ function newQrToken() {
   return `evt_${globalThis.crypto.randomUUID().replace(/-/g, "")}`;
 }
 
-/** Re-derives time-based status for fallback events so local data matches DB behaviour. */
-function resolveFallbackStatus(event: Event): Event {
-  return { ...event, status: resolveEventStatus(event.date, event.startTime, event.endTime, event.status) as EventStatus };
-}
-
-function fallbackEventsResolved(): Event[] {
-  return fallbackEvents.map(resolveFallbackStatus);
-}
-
 /** All events (admin view, includes draft/selesai), newest date first. */
 export async function listEvents(): Promise<Event[]> {
-  if (!isDatabaseConfigured()) return fallbackEventsResolved();
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const rows = await prisma.event.findMany({
@@ -55,16 +45,13 @@ export async function listEvents(): Promise<Event[]> {
     });
     return rows.map(mapEventRow);
   } catch {
-    return fallbackEventsResolved();
+    return [];
   }
 }
 
 /** Single event by id (admin/service role). */
 export async function getEvent(id: string): Promise<Event | null> {
-  if (!isDatabaseConfigured()) {
-    const found = fallbackEvents.find((event) => event.id === id);
-    return found ? resolveFallbackStatus(found) : null;
-  }
+  if (!isDatabaseConfigured()) return null;
 
   try {
     const row = await prisma.event.findFirst({ where: { id, deletedAt: null } });
@@ -179,20 +166,7 @@ export type EventAttendanceRow = {
 
 /** Active members with their attendance status for one event (present + absent). */
 export async function getEventAttendanceRows(eventId: string): Promise<EventAttendanceRow[]> {
-  if (!isDatabaseConfigured()) {
-    return fallbackMembers
-      .filter((member) => member.status === "aktif")
-      .map((member) => {
-        const attendance = fallbackAttendances.find((item) => item.eventId === eventId && item.memberId === member.id);
-        return {
-          memberId: member.id,
-          memberNumber: member.memberNumber,
-          fullName: member.fullName,
-          nik: member.nik,
-          attendedAt: attendance?.attendedAt ?? null
-        };
-      });
-  }
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const [members, attendances] = await Promise.all([

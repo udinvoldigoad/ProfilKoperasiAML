@@ -10,7 +10,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { hardcodedGallery, products } from "@/lib/data";
+import { galleryItems, products } from "@/lib/data";
 import { listAnnouncements } from "@/lib/db/announcements";
 import { getSiteProfile } from "@/lib/db/settings";
 
@@ -176,7 +176,7 @@ export default async function HomePage() {
             title="Dokumentasi kegiatan dan potensi desa"
             description="Sekilas potret kegiatan koperasi dan potensi pertanian Desa Giri Mulyo."
           />
-          <GalleryCarousel items={hardcodedGallery} />
+          <GalleryCarousel items={galleryItems} />
           <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-border-subtle bg-surface-gray p-8 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
               <h3 className="text-xl font-bold text-primary">Ingin mengenal unit usaha kami?</h3>

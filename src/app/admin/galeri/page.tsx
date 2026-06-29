@@ -1,13 +1,13 @@
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { Card } from "@/components/ui/card";
-import { hardcodedGallery } from "@/lib/data";
+import { galleryItems } from "@/lib/data";
 
 export default function AdminGaleriPage() {
   return (
     <div className="mx-auto max-w-container">
       <AdminPageHeader
         title="Galeri Publik"
-        description="Sesuai keputusan, galeri umum dibuat hardcoded untuk menekan biaya storage jangka panjang."
+        description="Galeri publik memakai aset gambar yang tersimpan di project agar ringan dan konsisten."
       />
       <Card className="mb-6">
         <p className="text-on-surface-variant">
@@ -15,7 +15,7 @@ export default function AdminGaleriPage() {
         </p>
       </Card>
       <div className="grid gap-6 md:grid-cols-3">
-        {hardcodedGallery.map((item) => (
+        {galleryItems.map((item) => (
           <Card key={item.id} className="overflow-hidden p-0">
             <img src={item.imageUrl} alt={item.title} className="h-52 w-full object-cover" />
             <div className="p-5">

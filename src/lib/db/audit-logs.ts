@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import type { AuditLog } from "@/types";
-import { auditLogs as fallbackAuditLogs } from "@/lib/data";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
 /** Best-effort client IP from proxy headers. */
@@ -39,7 +38,7 @@ export async function logAudit(entry: AuditEntry): Promise<void> {
 
 /** Recent audit entries, newest first, with the actor resolved to a label. */
 export async function listAuditLogs(limit = 50): Promise<AuditLog[]> {
-  if (!isDatabaseConfigured()) return fallbackAuditLogs;
+  if (!isDatabaseConfigured()) return [];
 
   try {
     const rows = await prisma.auditLog.findMany({
