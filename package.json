@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next build && node scripts/prepare-standalone.mjs",
+    "build": "prisma generate && next build && node scripts/seed-site-assets.mjs && node scripts/prepare-standalone.mjs",
     "start": "node server.js",
     "lint": "next lint",
     "prisma:generate": "prisma generate"

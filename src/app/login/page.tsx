@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { siteAssetUrl } from "@/lib/site-assets";
 import { AlertTriangle } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
@@ -26,7 +27,7 @@ export default async function LoginPage({
       <section className="container-page flex min-h-[70vh] items-center justify-center py-12 sm:py-16">
         <div className="w-full max-w-md">
           <div className="text-center">
-            <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="mx-auto h-16 w-16 object-contain" />
+            <img src={siteAssetUrl("images/logo-koperasi.png")} alt="Logo Koperasi" className="mx-auto h-16 w-16 object-contain" />
             <h1 className="mt-4 text-2xl font-extrabold text-primary sm:text-3xl">Masuk Portal Koperasi</h1>
             <p className="mt-2 text-sm text-on-surface-variant">
               Anggota masuk dengan <strong>NIK</strong>, admin dengan <strong>email</strong>.

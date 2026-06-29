@@ -51,6 +51,7 @@ DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DATABASE"
 AUTH_SECRET="isi-string-acak-panjang"
 GALLERY_UPLOAD_DIR="/home/USER/gallery-uploads" # optional
 PROFILE_PHOTO_UPLOAD_DIR="/home/USER/profile-photo-uploads" # optional
+SITE_ASSET_UPLOAD_DIR="/home/USER/site-assets" # optional
 ```
 
 3. Generate Prisma client:
@@ -102,11 +103,12 @@ Kolom `Email` dan `Tipe/Jenis Anggota` boleh ditambahkan. Jika tipe tidak ada, s
 - Export data admin menggunakan Excel `.xlsx`.
 - Upload galeri disimpan di folder storage hosting (`GALLERY_UPLOAD_DIR` jika diisi, default `./storage/gallery`), sedangkan MySQL hanya menyimpan metadata dan path file.
 - Upload foto profil anggota disimpan di folder storage hosting (`PROFILE_PHOTO_UPLOAD_DIR` jika diisi, default `./storage/profile-photos`) dan path-nya tersimpan di `members.photo_url`.
+- Aset gambar bawaan website disalin dari `site-assets/` ke storage hosting (`SITE_ASSET_UPLOAD_DIR` jika diisi, default `./storage/site-assets`) saat build dan disajikan lewat `/api/site-assets/...`.
 
 ## Backup
 
 Untuk produksi di Hostinger, lakukan backup berkala:
 
 - Export database MySQL dari hPanel/phpMyAdmin.
-- Backup folder upload galeri dan foto profil dari file manager/FTP.
+- Backup folder upload galeri, foto profil, dan aset site dari file manager/FTP.
 - Simpan salinan di akun desa/koperasi, bukan akun pribadi mahasiswa KKN.

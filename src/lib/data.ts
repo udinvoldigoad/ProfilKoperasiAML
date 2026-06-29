@@ -1,3 +1,4 @@
+import { siteAssetUrl } from "@/lib/site-assets";
 import type { BoardMember, GalleryItem, Product, UnitGroup } from "@/types";
 
 export const siteProfile = {
@@ -10,8 +11,8 @@ export const siteProfile = {
   whatsapp: "+6282376314085",
   email: "koperasiam1258@gmail.com",
   operationalHours: "Senin - Jumat, 08.00 - 15.00 WIB",
-  heroImage: "/images/hero.jpeg",
-  meetingImage: "/images/pokat uye.jpeg"
+  heroImage: siteAssetUrl("images/hero.jpeg"),
+  meetingImage: siteAssetUrl("images/pokat uye.jpeg")
 };
 
 export const boardMembers: BoardMember[] = [
@@ -30,7 +31,7 @@ export const products: Product[] = [
     id: "pr-002",
     title: "Sarana Produksi Pertanian",
     description: "Penyediaan pupuk, benih, dan alat pendukung kebutuhan usaha tani anggota.",
-    imageUrl: "/images/saprotan.jpeg",
+    imageUrl: siteAssetUrl("images/saprotan.jpeg"),
     category: "Pertanian",
     status: "aktif"
   },
@@ -38,7 +39,7 @@ export const products: Product[] = [
     id: "pr-003",
     title: "Jual Beli Bibit Pertanian",
     description: "Penyediaan dan penjualan bibit unggul tanaman pertanian untuk anggota dan warga.",
-    imageUrl: "/images/bibit siger.jpg",
+    imageUrl: siteAssetUrl("images/bibit siger.jpg"),
     category: "Pertanian",
     status: "aktif"
   },
@@ -46,7 +47,7 @@ export const products: Product[] = [
     id: "pr-004",
     title: "Gudang Distribusi Pertanian Alpukat",
     description: "Pengumpulan, penyortiran, dan distribusi hasil panen alpukat ke mitra pasar.",
-    imageUrl: "/images/gudang alpukat.jpeg",
+    imageUrl: siteAssetUrl("images/gudang alpukat.jpeg"),
     category: "Distribusi",
     status: "aktif"
   }
@@ -56,7 +57,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-001",
     title: "Hari Koperasi Nasional ke-77",
-    imageUrl: "/images/girimulyo asik/hari koperasi nasional ke 77.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/hari koperasi nasional ke 77.jpeg"),
     description: "Dokumentasi kegiatan Hari Koperasi Nasional ke-77 bersama warga dan pengurus.",
     eventDate: "2026-06-01",
     category: "Kegiatan"
@@ -64,7 +65,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-002",
     title: "Juara 1 Pos Pelayanan Teknologi Tepat Guna",
-    imageUrl: "/images/girimulyo asik/juara 1 pos pelayanan teknoologi tepat guna.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/juara 1 pos pelayanan teknoologi tepat guna.jpeg"),
     description: "Capaian desa dalam pengembangan pos pelayanan teknologi tepat guna.",
     eventDate: "2026-06-02",
     category: "Prestasi"
@@ -72,7 +73,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-003",
     title: "Kunjungan Kerja",
-    imageUrl: "/images/girimulyo asik/kunjungan kerja.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/kunjungan kerja.jpeg"),
     description: "Kunjungan kerja dan koordinasi untuk pengembangan program desa.",
     eventDate: "2026-06-03",
     category: "Kunjungan"
@@ -80,7 +81,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-004",
     title: "Pameran Produk Desa",
-    imageUrl: "/images/girimulyo asik/pameran.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/pameran.jpeg"),
     description: "Pameran potensi dan produk unggulan Desa Giri Mulyo.",
     eventDate: "2026-06-04",
     category: "Pameran"
@@ -88,7 +89,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-005",
     title: "Studi Banding",
-    imageUrl: "/images/girimulyo asik/studi banding.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/studi banding.jpeg"),
     description: "Kegiatan studi banding untuk memperkuat tata kelola dan layanan desa.",
     eventDate: "2026-06-05",
     category: "Pembelajaran"
@@ -96,7 +97,7 @@ export const galleryItems: GalleryItem[] = [
   {
     id: "g-006",
     title: "Tanam Bibit",
-    imageUrl: "/images/girimulyo asik/tanam bibit.jpeg",
+    imageUrl: siteAssetUrl("images/girimulyo asik/tanam bibit.jpeg"),
     description: "Kegiatan penanaman bibit sebagai bagian dari penguatan potensi pertanian.",
     eventDate: "2026-06-06",
     category: "Pertanian"

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteAssetUrl } from "@/lib/site-assets";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { getSiteProfile } from "@/lib/db/settings";
 
@@ -9,7 +10,7 @@ export async function Footer() {
       <div className="container-page grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_1fr]">
         <div>
           <div className="flex items-center gap-3 text-primary">
-            <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
+            <img src={siteAssetUrl("images/logo-koperasi.png")} alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
             <span className="text-xl font-extrabold">{siteProfile.name}</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-on-surface-variant">
@@ -61,5 +62,3 @@ export async function Footer() {
     </footer>
   );
 }
-
-

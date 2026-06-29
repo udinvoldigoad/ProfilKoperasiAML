@@ -1,5 +1,6 @@
 "use client";
 
+import { siteAssetUrl } from "@/lib/site-assets";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogIn, Menu, X } from "lucide-react";
@@ -67,7 +68,7 @@ export function PublicNav() {
     <header className="sticky top-0 z-50 border-b border-border-subtle bg-white/95 backdrop-blur">
       <div className="container-page flex h-20 items-center justify-between">
         <Link href="/" className="flex min-h-11 items-center gap-3 text-primary" aria-label="Beranda Koperasi AML">
-          <img src="/images/logo-koperasi.png" alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
+          <img src={siteAssetUrl("images/logo-koperasi.png")} alt="Logo Koperasi" className="h-11 w-11 shrink-0 object-contain" />
           <span className="max-w-[190px] text-base font-extrabold leading-tight sm:max-w-none sm:text-xl">
             Agro Mulyo Lestari
           </span>

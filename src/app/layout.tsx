@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { siteAssetUrl } from "@/lib/site-assets";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -12,9 +13,9 @@ export const metadata: Metadata = {
   description:
     "Website profil dan sistem manajemen anggota Koperasi Agro Mulyo Lestari, Desa Giri Mulyo, Lampung Timur.",
   icons: {
-    icon: "/images/logo-koperasi.png",
-    shortcut: "/images/logo-koperasi.png",
-    apple: "/images/logo-koperasi.png"
+    icon: siteAssetUrl("images/logo-koperasi.png"),
+    shortcut: siteAssetUrl("images/logo-koperasi.png"),
+    apple: siteAssetUrl("images/logo-koperasi.png")
   },
   openGraph: {
     title: "Koperasi Agro Mulyo Lestari",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
       "Portal koperasi desa untuk profil publik, manajemen anggota, acara, dan presensi QR.",
     url: siteUrl,
     siteName: "Koperasi Agro Mulyo Lestari",
-    images: ["/images/hero.jpeg"],
+    images: [siteAssetUrl("images/hero.jpeg")],
     locale: "id_ID",
     type: "website"
   }
