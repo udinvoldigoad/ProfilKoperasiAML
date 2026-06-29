@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { LogIn, Phone, UserRound } from "lucide-react";
+import { LogIn, Building2, UserRound } from "lucide-react";
 import { useState } from "react";
 
 export function GuestLoginForm({ next }: { next?: string }) {
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [origin, setOrigin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +19,7 @@ export function GuestLoginForm({ next }: { next?: string }) {
       const response = await fetch("/api/tamu/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, next })
+        body: JSON.stringify({ name, origin, next })
       });
       const data = await response.json();
       if (!response.ok) {
@@ -53,16 +53,15 @@ export function GuestLoginForm({ next }: { next?: string }) {
         </label>
 
         <label className="grid gap-2 text-sm font-bold text-primary">
-          Nomor HP
+          Asal / Instansi
           <span className="relative block">
-            <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-text" size={18} aria-hidden="true" />
+            <Building2 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-text" size={18} aria-hidden="true" />
             <input
               className="min-h-12 w-full rounded-lg border border-border-subtle px-10 font-normal text-on-surface"
-              placeholder="08xxxxxxxxxx"
-              inputMode="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value.replace(/[^0-9+\-\s]/g, ""))}
-              autoComplete="tel"
+              placeholder="Desa / instansi / rombongan"
+              value={origin}
+              onChange={(event) => setOrigin(event.target.value)}
+              autoComplete="organization"
               required
             />
           </span>

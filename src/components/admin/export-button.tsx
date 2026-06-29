@@ -9,7 +9,7 @@ type ExportRow = Record<string, ExportValue>;
 function titleFromKey(key: string) {
   const special: Record<string, string> = {
     nik: "NIK",
-    nik_no_hp: "NIK / No HP",
+    nik_asal_instansi: "NIK / Asal-Instansi",
     no_anggota: "No Anggota",
     qr_code: "QR Code",
     waktu_hadir: "Waktu Hadir"

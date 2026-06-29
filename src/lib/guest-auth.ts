@@ -5,7 +5,7 @@ import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 export type SessionGuest = {
   id: string;
   name: string;
-  phone: string;
+  origin: string;
   expiresAt: string;
 };
 
@@ -21,7 +21,7 @@ export async function getSessionGuest(): Promise<SessionGuest | null> {
     return {
       id: guest.id,
       name: guest.name,
-      phone: guest.phone,
+      origin: guest.origin,
       expiresAt: guest.expiresAt.toISOString()
     };
   } catch {

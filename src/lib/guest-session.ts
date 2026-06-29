@@ -6,7 +6,7 @@ export const GUEST_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 export type GuestSessionClaims = {
   guestId: string;
   name: string;
-  phone: string;
+  origin: string;
   iat: number;
   exp: number;
 };
@@ -89,7 +89,7 @@ export async function verifyGuestSessionToken(token?: string | null): Promise<Gu
   if (!valid) return null;
 
   const claims = decodeJson<GuestSessionClaims>(body);
-  if (!claims || !claims.guestId || !claims.name || !claims.phone || !claims.exp) return null;
+  if (!claims || !claims.guestId || !claims.name || !claims.origin || !claims.exp) return null;
   if (claims.exp < Math.floor(Date.now() / 1000)) return null;
   return claims;
 }

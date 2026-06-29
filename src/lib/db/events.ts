@@ -163,7 +163,7 @@ export type EventAttendanceRow = {
   memberNumber: string;
   fullName: string;
   nik: string;
-  phone: string;
+  origin: string;
   attendedAt: string | null;
 };
 
@@ -175,7 +175,7 @@ export async function getEventAttendanceRows(eventId: string): Promise<EventAtte
     const [members, attendances, guestAttendances] = await Promise.all([
       prisma.member.findMany({
         where: { status: "aktif", deletedAt: null },
-        select: { id: true, memberNumber: true, fullName: true, nik: true, phone: true },
+        select: { id: true, memberNumber: true, fullName: true, nik: true },
         orderBy: [{ memberType: "asc" }, { memberNumber: "asc" }]
       }),
       prisma.attendance.findMany({
@@ -187,7 +187,7 @@ export async function getEventAttendanceRows(eventId: string): Promise<EventAtte
         select: {
           guestId: true,
           attendedAt: true,
-          guest: { select: { name: true, phone: true } }
+          guest: { select: { name: true, origin: true } }
         },
         orderBy: { attendedAt: "asc" }
       })
@@ -201,7 +201,7 @@ export async function getEventAttendanceRows(eventId: string): Promise<EventAtte
       memberNumber: member.memberNumber,
       fullName: member.fullName,
       nik: member.nik,
-      phone: member.phone ?? "",
+      origin: "",
       attendedAt: attendedAtByMember.get(member.id) ?? null
     }));
 
@@ -211,8 +211,8 @@ export async function getEventAttendanceRows(eventId: string): Promise<EventAtte
       memberId: row.guestId,
       memberNumber: "Tamu",
       fullName: row.guest.name,
-      nik: row.guest.phone,
-      phone: row.guest.phone,
+      nik: row.guest.origin,
+      origin: row.guest.origin,
       attendedAt: row.attendedAt.toISOString()
     }));
 

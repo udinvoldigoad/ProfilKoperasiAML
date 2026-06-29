@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AlertTriangle, LogIn, MessageCircle, Phone, ShieldCheck, UserRound, UserPlus, X } from "lucide-react";
+import { AlertTriangle, LogIn, MessageCircle, Building2, ShieldCheck, UserRound, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { RegisterCta } from "@/components/auth/register-cta";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [guestName, setGuestName] = useState("");
-  const [guestPhone, setGuestPhone] = useState("");
+  const [guestOrigin, setGuestOrigin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [failCount, setFailCount] = useState(0);
@@ -39,7 +39,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
           isGuest
             ? {
                 name: guestName,
-                phone: guestPhone,
+                origin: guestOrigin,
                 next: next?.startsWith("/presensi/scan") ? next : "/presensi/scan"
               }
             : { mode, identifier, password, next }
@@ -76,7 +76,7 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
     setIdentifier("");
     setPassword("");
     setGuestName("");
-    setGuestPhone("");
+    setGuestOrigin("");
     setError(null);
   }
 
@@ -173,19 +173,18 @@ export function LoginForm({ next, whatsapp }: { next?: string; whatsapp?: string
               </div>
             </div>
             <div>
-              <label className="text-sm font-bold text-primary" htmlFor="guest-phone">
-                Nomor HP
+              <label className="text-sm font-bold text-primary" htmlFor="guest-origin">
+                Asal / Instansi
               </label>
               <div className="relative mt-2">
-                <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-text" size={18} aria-hidden="true" />
+                <Building2 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-text" size={18} aria-hidden="true" />
                 <input
-                  id="guest-phone"
-                  inputMode="tel"
-                  value={guestPhone}
-                  onChange={(event) => setGuestPhone(event.target.value.replace(/[^0-9+\-\s]/g, ""))}
+                  id="guest-origin"
+                  value={guestOrigin}
+                  onChange={(event) => setGuestOrigin(event.target.value)}
                   className="min-h-12 w-full rounded-lg border border-border-subtle px-10"
-                  placeholder="08xxxxxxxxxx"
-                  autoComplete="tel"
+                  placeholder="Desa / instansi / rombongan"
+                  autoComplete="organization"
                   required
                 />
               </div>

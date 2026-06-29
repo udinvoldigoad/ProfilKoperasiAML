@@ -1,19 +1,20 @@
+import { createHash } from "node:crypto";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 
 export const GUEST_TTL_DAYS = 7;
 
-export function normalizeGuestPhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("0")) return `62${digits.slice(1)}`;
-  if (digits.startsWith("62")) return digits;
-  return digits;
+function normalizeText(value: string) {
+  return value
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
-export function displayGuestPhone(value: string) {
-  const normalized = normalizeGuestPhone(value);
-  if (normalized.startsWith("62")) return `0${normalized.slice(2)}`;
-  return normalized;
+export function guestIdentityKey(name: string, origin: string) {
+  const normalized = `${normalizeText(name)}|${normalizeText(origin)}`;
+  return createHash("sha256").update(normalized).digest("hex");
 }
 
 export function guestExpiresAt(now = new Date()) {
@@ -43,38 +44,36 @@ export async function cleanupExpiredGuests() {
 }
 
 export type GuestLoginResult =
-  | { ok: true; guest: { id: string; name: string; phone: string; expiresAt: Date } }
+  | { ok: true; guest: { id: string; name: string; origin: string; expiresAt: Date } }
   | { ok: false; error: string };
 
-export async function loginGuest(input: { name: string; phone: string }): Promise<GuestLoginResult> {
+export async function loginGuest(input: { name: string; origin: string }): Promise<GuestLoginResult> {
   if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
 
   const name = input.name.replace(/\s+/g, " ").trim();
-  const normalizedPhone = normalizeGuestPhone(input.phone);
-  const phone = displayGuestPhone(input.phone);
+  const origin = input.origin.replace(/\s+/g, " ").trim();
 
   if (name.length < 2) return { ok: false, error: "Nama tamu minimal 2 karakter." };
-  if (normalizedPhone.length < 9 || normalizedPhone.length > 16) {
-    return { ok: false, error: "Nomor HP tamu tidak valid." };
-  }
+  if (origin.length < 2) return { ok: false, error: "Asal atau instansi minimal 2 karakter." };
 
   await cleanupExpiredGuests();
 
   try {
+    const identityKey = guestIdentityKey(name, origin);
     const guest = await prisma.guest.upsert({
-      where: { normalizedPhone },
+      where: { identityKey },
       update: {
         name,
-        phone,
+        origin,
         expiresAt: guestExpiresAt()
       },
       create: {
         name,
-        phone,
-        normalizedPhone,
+        origin,
+        identityKey,
         expiresAt: guestExpiresAt()
       },
-      select: { id: true, name: true, phone: true, expiresAt: true }
+      select: { id: true, name: true, origin: true, expiresAt: true }
     });
 
     return { ok: true, guest };

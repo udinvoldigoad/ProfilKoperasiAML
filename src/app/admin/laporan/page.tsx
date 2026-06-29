@@ -33,7 +33,7 @@ export default async function AdminLaporanPage() {
           jenis: row.attendeeType === "tamu" ? "Tamu" : "Anggota",
           no_anggota: row.memberNumber,
           nama: row.fullName,
-          nik_no_hp: row.attendeeType === "tamu" ? row.phone : row.nik,
+          nik_asal_instansi: row.attendeeType === "tamu" ? row.origin : row.nik,
           status: row.attendedAt ? "Hadir" : "Tidak Hadir",
           waktu_hadir: row.attendedAt ? formatDateTimeWIB(row.attendedAt) : ""
         }))

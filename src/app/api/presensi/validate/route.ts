@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     const currentGuest = await prisma.guest.findFirst({
       where: { id: guest.id, expiresAt: { gt: new Date() } },
-      select: { id: true, name: true, phone: true }
+      select: { id: true, name: true, origin: true }
     });
 
     if (!currentGuest) {

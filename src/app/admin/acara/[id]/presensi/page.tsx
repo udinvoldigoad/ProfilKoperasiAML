@@ -36,7 +36,7 @@ function PresensiTable({
               <th className="px-5 py-4">Jenis</th>
               <th className="px-5 py-4">No Anggota</th>
               <th className="px-5 py-4">Nama</th>
-              <th className="px-5 py-4">NIK / No HP</th>
+              <th className="px-5 py-4">NIK / Asal-Instansi</th>
               <th className="px-5 py-4">Status</th>
               {isPresent ? <th className="px-5 py-4">Waktu Hadir</th> : null}
             </tr>
@@ -50,7 +50,7 @@ function PresensiTable({
                   </td>
                   <td className="px-5 py-4 font-bold text-primary">{row.memberNumber}</td>
                   <td className="px-5 py-4 font-bold">{row.fullName}</td>
-                  <td className="px-5 py-4">{row.attendeeType === "tamu" ? row.phone : row.nik}</td>
+                  <td className="px-5 py-4">{row.attendeeType === "tamu" ? row.origin : row.nik}</td>
                   <td className="px-5 py-4">
                     <Badge tone={isPresent ? "success" : "warning"}>{isPresent ? "Hadir" : "Tidak Hadir"}</Badge>
                   </td>
@@ -83,7 +83,7 @@ export default async function PresensiAcaraPage({ params }: { params: Promise<{ 
     jenis: row.attendeeType === "tamu" ? "Tamu" : "Anggota",
     no_anggota: row.memberNumber,
     nama: row.fullName,
-    nik_no_hp: row.attendeeType === "tamu" ? row.phone : row.nik,
+    nik_asal_instansi: row.attendeeType === "tamu" ? row.origin : row.nik,
     status: row.attendedAt ? "Hadir" : "Tidak Hadir",
     waktu_hadir: row.attendedAt ? formatDateTimeWIB(row.attendedAt) : ""
   }));
