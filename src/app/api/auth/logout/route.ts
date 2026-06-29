@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const formNext = (await request.formData().catch(() => null))?.get("next");
   const next = safeNext(typeof formNext === "string" ? formNext : request.nextUrl.searchParams.get("next"));
 
-  const response = NextResponse.redirect(new URL(next, request.url), 303);
+  const response = new NextResponse(null, { status: 303, headers: { Location: next } });
   clearSessionCookie(response);
   return response;
 }
