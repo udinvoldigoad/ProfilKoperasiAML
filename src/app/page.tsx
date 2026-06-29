@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronDown, ChevronRight, Images, MapPin, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, Images, MapPin, ShieldCheck, Users } from "lucide-react";
 import { GalleryCarousel } from "@/components/public/gallery-carousel";
 import { ProfileAnnouncementsSection } from "@/components/public/profile-announcements-section";
 import { ProfileStructureSection } from "@/components/public/profile-structure-section";
@@ -188,14 +188,17 @@ export default async function HomePage() {
               Lihat Foto Lainnya
             </ButtonLink>
           </div>
-          <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-border-subtle bg-surface-gray p-8 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div className="relative mt-10 overflow-hidden rounded-3xl border-2 border-primary-container/70 bg-surface-gray p-8 text-center shadow-[0_18px_45px_rgba(0,91,105,0.16)] outline outline-4 outline-secondary-container/25 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:text-left">
+            <div className="absolute inset-x-8 top-0 h-1 rounded-b-full bg-primary-container" aria-hidden="true" />
             <div>
-              <h3 className="text-xl font-bold text-primary">Ingin mengenal unit usaha kami?</h3>
-              <p className="mt-1 text-on-surface-variant">Lihat unit-unit koperasi beserta titik lokasinya pada peta.</p>
+              <h3 className="text-xl font-bold text-primary">Ingin melihat dokumentasi lainnya?</h3>
+              <p className="mt-1 text-on-surface-variant">
+                Buka kumpulan foto kegiatan koperasi, unit usaha, dan potensi Desa Giri Mulyo.
+              </p>
             </div>
-            <ButtonLink href="#unit">
-              Lihat Unit Koperasi
-              <ChevronRight size={18} aria-hidden="true" />
+            <ButtonLink href="/galeri" className="mt-5 sm:mt-0">
+              <Images size={18} aria-hidden="true" />
+              Lihat Foto Lainnya
             </ButtonLink>
           </div>
         </div>
