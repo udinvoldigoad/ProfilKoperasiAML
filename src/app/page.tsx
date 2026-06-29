@@ -146,7 +146,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Produk dan Layanan"
             title="Layanan koperasi yang dekat dengan kebutuhan warga"
-            description="Mulai dari simpan pinjam, penyediaan sarana pertanian, hingga distribusi hasil panen anggota."
+            description="Mulai dari penyedia bibit pertanian, penyediaan sarana pertanian, hingga distribusi hasil panen anggota."
           />
           <Reveal className="mt-8 grid gap-5 sm:grid-cols-3">
             {products.map((product) => (
