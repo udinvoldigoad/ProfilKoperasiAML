@@ -10,8 +10,8 @@ export const runtime = "nodejs";
 
 // Supported member import layout:
 // No | Nama Anggota | No Anggota | NIK | Tempat Lahir | Tanggal Lahir | Alamat | No HP
-// Optional: Email and Tipe/Jenis Anggota. If type is not present, the parser also
-// reads helper sheets with "nama anggota baru" / "nama pendiri" headings.
+// Optional: Email and Tipe/Jenis Anggota. If type is not present, yellow-highlighted
+// member rows are anggota_lama; rows without highlight are anggota_baru.
 
 export type ImportRow = {
   row: number;
@@ -77,9 +77,6 @@ function normalizeHeader(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
-function normalizeName(value: string): string {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
 
 function parseMemberType(value: string): MemberType | null {
   const normalized = normalizeHeader(value);
@@ -140,56 +137,6 @@ function findMemberLayout(workbook: ExcelJS.Workbook): MemberLayout | null {
   return best;
 }
 
-function collectNamesFromSection(sheet: ExcelJS.Worksheet, titleRow: number, titleCol: number, type: MemberType, lookup: Map<string, MemberType>) {
-  let nameColumn: number | null = null;
-  let headerRow: number | null = null;
-
-  for (let rowNumber = titleRow + 1; rowNumber <= Math.min(sheet.rowCount, titleRow + 4); rowNumber += 1) {
-    for (let colNumber = Math.max(1, titleCol - 1); colNumber <= titleCol + 4; colNumber += 1) {
-      const header = normalizeHeader(cellText(sheet.getCell(rowNumber, colNumber)));
-      if (header === "nama" || header === "namaanggota") {
-        nameColumn = colNumber;
-        headerRow = rowNumber;
-        break;
-      }
-    }
-    if (nameColumn && headerRow) break;
-  }
-
-  if (!nameColumn || !headerRow) return;
-
-  let blankStreak = 0;
-  for (let rowNumber = headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
-    const name = cellText(sheet.getCell(rowNumber, nameColumn));
-    if (!name) {
-      blankStreak += 1;
-      if (blankStreak >= 8) break;
-      continue;
-    }
-
-    blankStreak = 0;
-    const key = normalizeName(name);
-    if (!key || key === "nama" || key === "nama anggota") continue;
-    if (type === "anggota_baru" || !lookup.has(key)) lookup.set(key, type);
-  }
-}
-
-function buildMemberTypeLookup(workbook: ExcelJS.Workbook): Map<string, MemberType> {
-  const lookup = new Map<string, MemberType>();
-
-  for (const sheet of workbook.worksheets) {
-    const rowLimit = Math.min(sheet.rowCount, 4);
-    for (let rowNumber = 1; rowNumber <= rowLimit; rowNumber += 1) {
-      const row = sheet.getRow(rowNumber);
-      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-        const type = parseMemberType(cellText(cell));
-        if (type) collectNamesFromSection(sheet, rowNumber, colNumber, type, lookup);
-      });
-    }
-  }
-
-  return lookup;
-}
 
 function parseWorkbook(workbook: ExcelJS.Workbook): ImportRow[] {
   const layout = findMemberLayout(workbook);
@@ -200,7 +147,6 @@ function parseWorkbook(workbook: ExcelJS.Workbook): ImportRow[] {
   }
 
   const { sheet, headerRow, columns } = layout;
-  const typeLookup = buildMemberTypeLookup(workbook);
   const rows: ImportRow[] = [];
 
   for (let rowNumber = headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
@@ -217,9 +163,8 @@ function parseWorkbook(workbook: ExcelJS.Workbook): ImportRow[] {
     if (!memberNumber && !fullName && !nik) continue;
 
     const explicitType = columns.memberType ? parseMemberType(cellText(excelRow.getCell(columns.memberType))) : null;
-    const lookedUpType = typeLookup.get(normalizeName(fullName)) ?? null;
     const highlighted = isHighlighted(excelRow.getCell(columns.memberNumber!)) || isHighlighted(excelRow.getCell(columns.fullName!));
-    const memberType: ImportRow["memberType"] = explicitType ?? lookedUpType ?? (highlighted ? "anggota_baru" : "anggota_lama");
+    const memberType: ImportRow["memberType"] = explicitType ?? (highlighted ? "anggota_lama" : "anggota_baru");
 
     let error: string | undefined;
     if (!fullName) error = "Nama kosong.";

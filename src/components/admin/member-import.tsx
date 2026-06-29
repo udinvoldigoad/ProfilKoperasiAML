@@ -99,7 +99,7 @@ export function MemberImport() {
               Format desa: <strong>No</strong>, <strong>Nama Anggota</strong>, <strong>No Anggota</strong>, <strong>NIK</strong>,
               <strong> Tempat Lahir</strong>, <strong>Tanggal Lahir</strong>, <strong>Alamat</strong>, dan <strong>No HP</strong>.
               Kolom <strong>Email</strong> serta <strong>Tipe/Jenis Anggota</strong> boleh ditambahkan bila ada. Jika tipe tidak ada,
-              sistem membaca sheet bantu <em>nama anggota baru</em> / <em>nama pendiri</em> bila tersedia.
+              nama/baris ber-highlight kuning dideteksi sebagai <strong>Anggota Lama</strong>; tanpa highlight menjadi <strong>Anggota Baru</strong>.
             </p>
           </div>
         </div>
