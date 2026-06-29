@@ -7,6 +7,8 @@
 - Login: session lokal dengan cookie bertanda tangan (`AUTH_SECRET`).
 - File upload: file fisik disimpan di storage hosting, MySQL hanya menyimpan path/metadata.
 
+- Runtime rekomendasi: Node.js 20.x.
+
 Jangan simpan gambar sebagai blob di MySQL. Untuk kapasitas 50GB Hostinger, pola yang benar adalah:
 
 ```txt
@@ -36,6 +38,11 @@ SEED_ADMIN_PASSWORD=
 
 1. Buat database MySQL di hPanel Hostinger.
 2. Masukkan env production di Hostinger Node.js app.
+   - Preset framework: `Other` jika memakai output standalone.
+   - Versi Node: `20.x`.
+   - Build command: `npm run build`.
+   - Output directory: `.next/standalone`.
+   - Entry file: `server.js`.
 3. Jalankan build:
 
 ```bash
@@ -94,3 +101,7 @@ docs/hostinger-mysql-init.sql
 ```
 
 Setelah SQL sukses, lanjutkan seed admin lewat endpoint `/api/admin/seed`.
+
+## Troubleshooting Prisma Hostinger
+
+Jika endpoint seed menampilkan `PANIC: timer has gone away`, gunakan Node.js 20.x lalu deploy ulang commit terbaru. Project ini juga memakai Prisma binary engine agar lebih stabil di shared Node hosting.

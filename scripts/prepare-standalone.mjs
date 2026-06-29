@@ -12,3 +12,5 @@ function copyIfExists(source, target) {
 
 copyIfExists(join(root, "public"), join(standaloneDir, "public"));
 copyIfExists(join(root, ".next", "static"), join(standaloneDir, ".next", "static"));
+copyIfExists(join(root, "node_modules", ".prisma"), join(standaloneDir, "node_modules", ".prisma"));
+copyIfExists(join(root, "node_modules", "@prisma", "client"), join(standaloneDir, "node_modules", "@prisma", "client"));
