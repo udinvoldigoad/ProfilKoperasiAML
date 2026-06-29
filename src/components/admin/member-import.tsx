@@ -116,7 +116,7 @@ export function MemberImport() {
             className="min-h-12 rounded-lg border border-dashed border-primary-container bg-surface-gray p-3 font-normal"
           />
           <span className="text-xs font-normal text-muted-text">
-            Tips: format kolom NIK sebagai Text di Excel agar 16 digit tidak terpotong.
+            Tips: format kolom NIK sebagai Text agar 16 digit tidak terpotong. Tanggal lahir dibaca sebagai DD/MM/YYYY, contoh 5/7/1990 = 5 Juli 1990.
           </span>
         </label>
         <button

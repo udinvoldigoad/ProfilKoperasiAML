@@ -58,19 +58,47 @@ function excelSerialDateToIso(serial: number): string {
   return new Date(utc).toISOString().slice(0, 10);
 }
 
+function normalizeYear(value: string): number {
+  const year = Number(value);
+  if (value.length === 2) return year >= 50 ? 1900 + year : 2000 + year;
+  return year;
+}
+
+function isoDateFromParts(year: number, month: number, day: number): string | null {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) return null;
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+
+  return `${year.toString().padStart(4, "0")}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+}
+
+function parseDateText(text: string): string | null {
+  const value = text.trim();
+  if (!value) return null;
+
+  const iso = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (iso) return isoDateFromParts(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+
+  const idDate = value.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+  if (idDate) return isoDateFromParts(normalizeYear(idDate[3]), Number(idDate[2]), Number(idDate[1]));
+
+  return null;
+}
+
 function cellDate(cell: ExcelJS.Cell): string {
+  const displayedDate = parseDateText(cell.text ?? "");
+  if (displayedDate) return displayedDate;
+
+  const textDate = parseDateText(cellText(cell));
+  if (textDate) return textDate;
+
   const value = cell.value;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === "number" && Number.isFinite(value)) return excelSerialDateToIso(value);
 
-  const text = cellText(cell);
-  const iso = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-  if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
-
-  const idDate = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-  if (idDate) return `${idDate[3]}-${idDate[2].padStart(2, "0")}-${idDate[1].padStart(2, "0")}`;
-
-  return text;
+  return cellText(cell);
 }
 
 function normalizeHeader(value: string): string {
