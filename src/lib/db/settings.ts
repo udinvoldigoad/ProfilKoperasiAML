@@ -14,10 +14,25 @@ const SITE_PROFILE_KEY = "site_profile";
 
 export type MutationResult = { ok: true } | { ok: false; error: string };
 
+function editableProfileFields(value: unknown): Partial<SiteProfileInput> {
+  if (!value || typeof value !== "object") return {};
+  const source = value as Partial<SiteProfileInput>;
+  return {
+    name: source.name,
+    village: source.village,
+    district: source.district,
+    regency: source.regency,
+    address: source.address,
+    whatsapp: source.whatsapp,
+    email: source.email,
+    operationalHours: source.operationalHours
+  };
+}
+
 /**
  * Cached read of the site profile: stored editable fields merged over the
- * static defaults. Tagged so admin saves can purge it via revalidateTag,
- * which keeps public pages statically cached yet fresh after an edit.
+ * static defaults. Image paths stay code-controlled so stale DB settings cannot
+ * point the public page at missing files.
  */
 export const getSiteProfile = unstable_cache(
   async (): Promise<SiteProfile> => {
@@ -29,9 +44,9 @@ export const getSiteProfile = unstable_cache(
     const { data, error } = await admin.from("settings").select("value").eq("key", SITE_PROFILE_KEY).maybeSingle();
 
     if (error || !data?.value) return defaultSiteProfile;
-    return { ...defaultSiteProfile, ...(data.value as Partial<SiteProfile>) };
+    return { ...defaultSiteProfile, ...editableProfileFields(data.value) };
   },
-  ["site-profile"],
+  ["site-profile", "static-image-fields-v2"],
   { tags: [SITE_PROFILE_TAG] }
 );
 
