@@ -4,12 +4,14 @@ import { getSessionUser } from "@/lib/auth";
 import { isValidNik, normalizeNik } from "@/lib/auth-identifiers";
 import { createMember, type CreateMemberInput } from "@/lib/db/members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
+import type { MemberType } from "@/types";
 
 export const runtime = "nodejs";
 
-// Column layout (row 1 = header):
-// A No Anggota | B Nama | C NIK | D Tempat Lahir | E Tanggal Lahir | F Alamat | G Email | H No HP
-// Yellow-highlighted row => anggota_baru, otherwise anggota_lama (per PRD).
+// Supported member import layout:
+// No | Nama Anggota | No Anggota | NIK | Tempat Lahir | Tanggal Lahir | Alamat | No HP
+// Optional: Email and Tipe/Jenis Anggota. If type is not present, the parser also
+// reads helper sheets with "nama anggota baru" / "nama pendiri" headings.
 
 export type ImportRow = {
   row: number;
@@ -26,24 +28,80 @@ export type ImportRow = {
   error?: string;
 };
 
+type ColumnKey = keyof Pick<
+  ImportRow,
+  "memberNumber" | "fullName" | "nik" | "birthPlace" | "birthDate" | "address" | "email" | "phone" | "memberType"
+>;
+
+type MemberLayout = {
+  sheet: ExcelJS.Worksheet;
+  headerRow: number;
+  columns: Partial<Record<ColumnKey, number>>;
+};
+
 function cellText(cell: ExcelJS.Cell): string {
   const value = cell.value;
   if (value === null || value === undefined) return "";
-  if (typeof value === "object" && "text" in value && typeof value.text === "string") return value.text.trim();
-  return String(cell.text ?? "").trim();
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === "object") {
+    if ("text" in value && typeof value.text === "string") return value.text.trim();
+    if ("result" in value && value.result !== null && value.result !== undefined) return String(value.result).trim();
+    if ("richText" in value && Array.isArray(value.richText)) {
+      return value.richText.map((part) => part.text).join("").trim();
+    }
+  }
+  return String(cell.text ?? value ?? "").trim();
+}
+
+function excelSerialDateToIso(serial: number): string {
+  const utc = Date.UTC(1899, 11, 30) + Math.round(serial) * 24 * 60 * 60 * 1000;
+  return new Date(utc).toISOString().slice(0, 10);
 }
 
 function cellDate(cell: ExcelJS.Cell): string {
   const value = cell.value;
-  if (value instanceof Date) {
-    const y = value.getUTCFullYear();
-    const m = String(value.getUTCMonth() + 1).padStart(2, "0");
-    const d = String(value.getUTCDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === "number" && Number.isFinite(value)) return excelSerialDateToIso(value);
+
   const text = cellText(cell);
-  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return match ? match[0] : text;
+  const iso = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (iso) return `${iso[1]}-${iso[2].padStart(2, "0")}-${iso[3].padStart(2, "0")}`;
+
+  const idDate = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (idDate) return `${idDate[3]}-${idDate[2].padStart(2, "0")}-${idDate[1].padStart(2, "0")}`;
+
+  return text;
+}
+
+function normalizeHeader(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function normalizeName(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function parseMemberType(value: string): MemberType | null {
+  const normalized = normalizeHeader(value);
+  if (!normalized) return null;
+  if (normalized.includes("baru")) return "anggota_baru";
+  if (normalized.includes("lama") || normalized.includes("pendiri")) return "anggota_lama";
+  return null;
+}
+
+function headerKey(value: string): ColumnKey | null {
+  const header = normalizeHeader(value);
+  if (!header) return null;
+  if (header === "noanggota" || header === "nomoranggota" || header.includes("noanggota")) return "memberNumber";
+  if (header === "nama" || header === "namaanggota" || header.includes("namaanggota")) return "fullName";
+  if (header === "nik" || header.includes("nik")) return "nik";
+  if (header.includes("tempatlahir")) return "birthPlace";
+  if (header.includes("tanggallahir") || header.includes("tgllahir")) return "birthDate";
+  if (header.includes("alamat")) return "address";
+  if (header.includes("email")) return "email";
+  if (header.includes("nohp") || header.includes("hp") || header.includes("telepon") || header.includes("telp")) return "phone";
+  if (header.includes("tipe") || header.includes("jenis")) return "memberType";
+  return null;
 }
 
 function isHighlighted(cell: ExcelJS.Cell): boolean {
@@ -52,31 +110,116 @@ function isHighlighted(cell: ExcelJS.Cell): boolean {
   const argb = fill.fgColor?.argb;
   if (!argb) return false;
   const upper = argb.toUpperCase();
-  // Ignore white / transparent / black fills; anything else counts as a highlight.
   return upper !== "FFFFFFFF" && upper !== "00000000" && upper !== "FF000000";
 }
 
+function findMemberLayout(workbook: ExcelJS.Workbook): MemberLayout | null {
+  let best: MemberLayout | null = null;
+  let bestScore = 0;
+
+  for (const sheet of workbook.worksheets) {
+    const rowLimit = Math.min(sheet.rowCount, 12);
+    for (let rowNumber = 1; rowNumber <= rowLimit; rowNumber += 1) {
+      const columns: Partial<Record<ColumnKey, number>> = {};
+      const row = sheet.getRow(rowNumber);
+
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        const key = headerKey(cellText(cell));
+        if (key && !columns[key]) columns[key] = colNumber;
+      });
+
+      const requiredScore = Number(Boolean(columns.memberNumber)) + Number(Boolean(columns.fullName)) + Number(Boolean(columns.nik));
+      const totalScore = Object.keys(columns).length + requiredScore * 3;
+      if (columns.memberNumber && columns.fullName && columns.nik && totalScore > bestScore) {
+        best = { sheet, headerRow: rowNumber, columns };
+        bestScore = totalScore;
+      }
+    }
+  }
+
+  return best;
+}
+
+function collectNamesFromSection(sheet: ExcelJS.Worksheet, titleRow: number, titleCol: number, type: MemberType, lookup: Map<string, MemberType>) {
+  let nameColumn: number | null = null;
+  let headerRow: number | null = null;
+
+  for (let rowNumber = titleRow + 1; rowNumber <= Math.min(sheet.rowCount, titleRow + 4); rowNumber += 1) {
+    for (let colNumber = Math.max(1, titleCol - 1); colNumber <= titleCol + 4; colNumber += 1) {
+      const header = normalizeHeader(cellText(sheet.getCell(rowNumber, colNumber)));
+      if (header === "nama" || header === "namaanggota") {
+        nameColumn = colNumber;
+        headerRow = rowNumber;
+        break;
+      }
+    }
+    if (nameColumn && headerRow) break;
+  }
+
+  if (!nameColumn || !headerRow) return;
+
+  let blankStreak = 0;
+  for (let rowNumber = headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const name = cellText(sheet.getCell(rowNumber, nameColumn));
+    if (!name) {
+      blankStreak += 1;
+      if (blankStreak >= 8) break;
+      continue;
+    }
+
+    blankStreak = 0;
+    const key = normalizeName(name);
+    if (!key || key === "nama" || key === "nama anggota") continue;
+    if (type === "anggota_baru" || !lookup.has(key)) lookup.set(key, type);
+  }
+}
+
+function buildMemberTypeLookup(workbook: ExcelJS.Workbook): Map<string, MemberType> {
+  const lookup = new Map<string, MemberType>();
+
+  for (const sheet of workbook.worksheets) {
+    const rowLimit = Math.min(sheet.rowCount, 4);
+    for (let rowNumber = 1; rowNumber <= rowLimit; rowNumber += 1) {
+      const row = sheet.getRow(rowNumber);
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        const type = parseMemberType(cellText(cell));
+        if (type) collectNamesFromSection(sheet, rowNumber, colNumber, type, lookup);
+      });
+    }
+  }
+
+  return lookup;
+}
+
 function parseWorkbook(workbook: ExcelJS.Workbook): ImportRow[] {
-  const sheet = workbook.worksheets[0];
-  if (!sheet) return [];
+  const layout = findMemberLayout(workbook);
+  if (!layout) {
+    throw new Error(
+      "Format Excel belum sesuai. Pastikan ada header: Nama Anggota, No Anggota, NIK, Tempat Lahir, Tanggal Lahir, Alamat, dan No HP."
+    );
+  }
+
+  const { sheet, headerRow, columns } = layout;
+  const typeLookup = buildMemberTypeLookup(workbook);
   const rows: ImportRow[] = [];
 
-  sheet.eachRow((excelRow, rowNumber) => {
-    if (rowNumber === 1) return; // header
-    const memberNumber = cellText(excelRow.getCell(1));
-    const fullName = cellText(excelRow.getCell(2));
-    const nik = normalizeNik(cellText(excelRow.getCell(3)));
-    const birthPlace = cellText(excelRow.getCell(4));
-    const birthDate = cellDate(excelRow.getCell(5));
-    const address = cellText(excelRow.getCell(6));
-    const email = cellText(excelRow.getCell(7));
-    const phone = cellText(excelRow.getCell(8));
+  for (let rowNumber = headerRow + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const excelRow = sheet.getRow(rowNumber);
+    const memberNumber = cellText(excelRow.getCell(columns.memberNumber!));
+    const fullName = cellText(excelRow.getCell(columns.fullName!));
+    const nik = normalizeNik(cellText(excelRow.getCell(columns.nik!)));
+    const birthPlace = columns.birthPlace ? cellText(excelRow.getCell(columns.birthPlace)) : "";
+    const birthDate = columns.birthDate ? cellDate(excelRow.getCell(columns.birthDate)) : "";
+    const address = columns.address ? cellText(excelRow.getCell(columns.address)) : "";
+    const email = columns.email ? cellText(excelRow.getCell(columns.email)) : "";
+    const phone = columns.phone ? cellText(excelRow.getCell(columns.phone)) : "";
 
-    // Skip completely empty rows.
-    if (!memberNumber && !fullName && !nik) return;
+    if (!memberNumber && !fullName && !nik) continue;
 
-    const highlighted = isHighlighted(excelRow.getCell(1)) || isHighlighted(excelRow.getCell(2));
-    const memberType: ImportRow["memberType"] = highlighted ? "anggota_baru" : "anggota_lama";
+    const explicitType = columns.memberType ? parseMemberType(cellText(excelRow.getCell(columns.memberType))) : null;
+    const lookedUpType = typeLookup.get(normalizeName(fullName)) ?? null;
+    const highlighted = isHighlighted(excelRow.getCell(columns.memberNumber!)) || isHighlighted(excelRow.getCell(columns.fullName!));
+    const memberType: ImportRow["memberType"] = explicitType ?? lookedUpType ?? (highlighted ? "anggota_baru" : "anggota_lama");
 
     let error: string | undefined;
     if (!fullName) error = "Nama kosong.";
@@ -100,7 +243,7 @@ function parseWorkbook(workbook: ExcelJS.Workbook): ImportRow[] {
       valid: !error,
       error
     });
-  });
+  }
 
   return rows;
 }
@@ -109,9 +252,6 @@ export async function POST(request: NextRequest) {
   const session = await getSessionUser();
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Hanya admin yang diizinkan." }, { status: 403 });
-  }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 });
   }
 
   const mode = request.nextUrl.searchParams.get("mode") ?? "preview";
@@ -129,12 +269,12 @@ export async function POST(request: NextRequest) {
       const rows = parseWorkbook(workbook);
       const validCount = rows.filter((r) => r.valid).length;
       return NextResponse.json({ ok: true, rows, validCount, invalidCount: rows.length - validCount });
-    } catch {
-      return NextResponse.json({ error: "Gagal membaca file. Pastikan format .xlsx valid." }, { status: 400 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal membaca file. Pastikan format .xlsx valid.";
+      return NextResponse.json({ error: message }, { status: 400 });
     }
   }
 
-  // mode === "commit"
   let body: { rows?: ImportRow[] };
   try {
     body = await request.json();

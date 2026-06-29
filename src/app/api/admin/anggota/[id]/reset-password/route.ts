@@ -8,9 +8,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Hanya admin yang diizinkan." }, { status: 403 });
   }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 });
-  }
 
   const { id } = await params;
   const result = await resetMemberPassword(id);

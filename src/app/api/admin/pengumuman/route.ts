@@ -9,9 +9,6 @@ async function requireAdmin() {
   if (!session || session.role !== "admin") {
     return { error: NextResponse.json({ error: "Hanya admin yang diizinkan." }, { status: 403 }) };
   }
-  if (session.demo) {
-    return { error: NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 }) };
-  }
   return { session };
 }
 

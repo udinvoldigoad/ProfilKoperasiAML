@@ -16,9 +16,6 @@ export async function PATCH(request: NextRequest) {
   if (!session || session.role !== "anggota" || !session.member) {
     return NextResponse.json({ error: "Hanya anggota yang dapat mengubah profil ini." }, { status: 403 });
   }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 });
-  }
 
   let body: unknown;
   try {

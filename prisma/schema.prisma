@@ -59,7 +59,7 @@ model Profile {
 model Member {
   id           String       @id @default(uuid()) @db.Uuid
   profileId    String?      @unique @map("profile_id") @db.Uuid
-  memberNumber String       @unique @map("member_number")
+  memberNumber String       @map("member_number")
   fullName     String       @map("full_name")
   nik          String       @unique
   birthPlace   String       @map("birth_place")
@@ -77,6 +77,7 @@ model Member {
   profile      Profile?     @relation(fields: [profileId], references: [id])
   attendances  Attendance[]
 
+  @@unique([memberType, memberNumber])
   @@index([status, memberType])
   @@index([deletedAt])
   @@map("members")

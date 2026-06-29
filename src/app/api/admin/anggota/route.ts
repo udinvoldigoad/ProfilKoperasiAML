@@ -24,9 +24,6 @@ export async function POST(request: NextRequest) {
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Hanya admin yang dapat menambah anggota." }, { status: 403 });
   }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data. Aktifkan Supabase." }, { status: 503 });
-  }
 
   let body: unknown;
   try {

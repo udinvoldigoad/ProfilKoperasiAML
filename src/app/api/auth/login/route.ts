@@ -15,7 +15,7 @@ function safeNext(value: unknown) {
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json(
-      { error: "Supabase belum dikonfigurasi. Gunakan tombol Masuk Demo." },
+      { error: "Supabase belum dikonfigurasi. Hubungi admin untuk mengaktifkan backend." },
       { status: 503 }
     );
   }

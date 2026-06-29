@@ -1,5 +1,5 @@
 import type { Announcement } from "@/types";
-import { announcements as demoAnnouncements } from "@/lib/data";
+import { announcements as fallbackAnnouncements } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -33,12 +33,12 @@ function sortAnnouncements(list: Announcement[]): Announcement[] {
   });
 }
 
-/** All announcements (admin + public share the same set). Falls back to demo data. */
+/** All announcements (admin + public share the same set). Falls back to local seed data. */
 export async function listAnnouncements(): Promise<Announcement[]> {
-  if (!isSupabaseConfigured()) return sortAnnouncements(demoAnnouncements);
+  if (!isSupabaseConfigured()) return sortAnnouncements(fallbackAnnouncements);
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return sortAnnouncements(demoAnnouncements);
+  if (!admin) return sortAnnouncements(fallbackAnnouncements);
 
   const { data, error } = await admin
     .from("announcements")
@@ -46,18 +46,18 @@ export async function listAnnouncements(): Promise<Announcement[]> {
     .order("pinned", { ascending: false })
     .order("date", { ascending: false });
 
-  if (error || !data) return sortAnnouncements(demoAnnouncements);
+  if (error || !data) return sortAnnouncements(fallbackAnnouncements);
   return (data as AnnouncementRow[]).map(mapRow);
 }
 
 /** Single announcement by id (admin/service role). */
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
   if (!isSupabaseConfigured()) {
-    return demoAnnouncements.find((item) => item.id === id) ?? null;
+    return fallbackAnnouncements.find((item) => item.id === id) ?? null;
   }
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoAnnouncements.find((item) => item.id === id) ?? null;
+  if (!admin) return fallbackAnnouncements.find((item) => item.id === id) ?? null;
 
   const { data, error } = await admin.from("announcements").select(ANNOUNCEMENT_COLUMNS).eq("id", id).maybeSingle();
 

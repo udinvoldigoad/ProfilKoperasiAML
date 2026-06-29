@@ -1,4 +1,4 @@
-import { attendances as demoAttendances, events as demoEvents } from "@/lib/data";
+import { attendances as fallbackAttendances, events as fallbackEvents } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { wibMonthStartUtc } from "@/lib/utils";
@@ -18,11 +18,11 @@ type AttendanceRow = {
   events: { title: string; date: string } | null;
 };
 
-function demoAttendancesFor(memberId: string): MemberAttendance[] {
-  return demoAttendances
+function fallbackAttendancesFor(memberId: string): MemberAttendance[] {
+  return fallbackAttendances
     .filter((attendance) => attendance.memberId === memberId)
     .map((attendance) => {
-      const event = demoEvents.find((item) => item.id === attendance.eventId);
+      const event = fallbackEvents.find((item) => item.id === attendance.eventId);
       return {
         id: attendance.id,
         attendedAt: attendance.attendedAt,
@@ -39,10 +39,10 @@ function demoAttendancesFor(memberId: string): MemberAttendance[] {
  * verified session), so it does not depend on the attendance RLS policy.
  */
 export async function listMemberAttendances(memberId: string): Promise<MemberAttendance[]> {
-  if (!isSupabaseConfigured()) return demoAttendancesFor(memberId);
+  if (!isSupabaseConfigured()) return fallbackAttendancesFor(memberId);
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoAttendancesFor(memberId);
+  if (!admin) return fallbackAttendancesFor(memberId);
 
   const { data, error } = await admin
     .from("attendances")
@@ -66,7 +66,7 @@ export async function countAttendancesThisMonth(): Promise<number> {
   const startOfMonth = wibMonthStartUtc();
 
   if (!isSupabaseConfigured()) {
-    return demoAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;
+    return fallbackAttendances.filter((attendance) => attendance.attendedAt >= startOfMonth).length;
   }
 
   const admin = createSupabaseAdminClient();

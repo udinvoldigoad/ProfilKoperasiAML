@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import type { AuditLog } from "@/types";
-import { auditLogs as demoAuditLogs } from "@/lib/data";
+import { auditLogs as fallbackAuditLogs } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -20,7 +20,7 @@ export type AuditEntry = {
 
 /**
  * Records an admin action. Best-effort: failures never block the main request,
- * and nothing is written in demo mode (no service role).
+ * and nothing is written in local fallback mode (no service role).
  */
 export async function logAudit(entry: AuditEntry): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -52,9 +52,9 @@ type AuditLogRow = {
 
 /** Recent audit entries, newest first, with the actor resolved to a label. */
 export async function listAuditLogs(limit = 50): Promise<AuditLog[]> {
-  if (!isSupabaseConfigured()) return demoAuditLogs;
+  if (!isSupabaseConfigured()) return fallbackAuditLogs;
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoAuditLogs;
+  if (!admin) return fallbackAuditLogs;
 
   const { data, error } = await admin
     .from("audit_logs")

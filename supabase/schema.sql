@@ -20,7 +20,7 @@ create table profiles (
 create table members (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid unique references profiles(id) on delete set null,
-  member_number text not null unique,
+  member_number text not null,
   full_name text not null,
   nik text not null unique check (nik ~ '^[0-9]{16}$'),
   birth_place text not null,
@@ -101,6 +101,7 @@ create table audit_logs (
 -- Note: struktur pengurus, unit, produk, dan galeri bersifat hardcoded di aplikasi
 -- (src/lib/data.ts), jadi tidak membutuhkan tabel di sini.
 
+create unique index members_member_type_number_active_key on members(member_type, member_number) where deleted_at is null;
 create index members_status_type_idx on members(status, member_type) where deleted_at is null;
 create index events_status_date_idx on events(status, date) where deleted_at is null;
 create index attendances_member_idx on attendances(member_id);

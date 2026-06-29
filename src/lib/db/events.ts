@@ -1,9 +1,5 @@
 import type { Event, EventStatus } from "@/types";
-import {
-  attendances as demoAttendances,
-  getDemoEvents,
-  members as demoMembers
-} from "@/lib/data";
+import { attendances as fallbackAttendances, events as fallbackEvents, members as fallbackMembers } from "@/lib/data";
 import { eventEndToUtc, resolveEventStatus } from "@/lib/utils";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -46,21 +42,21 @@ function newQrToken() {
   return `evt_${globalThis.crypto.randomUUID().replace(/-/g, "")}`;
 }
 
-/** Re-derives the time-based status of a demo event so demo mode matches DB behaviour. */
-function resolveDemoStatus(event: Event): Event {
+/** Re-derives time-based status for fallback events so local data matches DB behaviour. */
+function resolveFallbackStatus(event: Event): Event {
   return { ...event, status: resolveEventStatus(event.date, event.startTime, event.endTime, event.status) };
 }
 
-function demoEventsResolved(): Event[] {
-  return getDemoEvents().map(resolveDemoStatus);
+function fallbackEventsResolved(): Event[] {
+  return fallbackEvents.map(resolveFallbackStatus);
 }
 
 /** All events (admin view, includes draft/selesai), newest date first. */
 export async function listEvents(): Promise<Event[]> {
-  if (!isSupabaseConfigured()) return demoEventsResolved();
+  if (!isSupabaseConfigured()) return fallbackEventsResolved();
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoEventsResolved();
+  if (!admin) return fallbackEventsResolved();
 
   const { data, error } = await admin
     .from("events")
@@ -68,21 +64,21 @@ export async function listEvents(): Promise<Event[]> {
     .is("deleted_at", null)
     .order("date", { ascending: false });
 
-  if (error || !data) return demoEventsResolved();
+  if (error || !data) return fallbackEventsResolved();
   return (data as EventRow[]).map(mapEventRow);
 }
 
 /** Single event by id (admin/service role). */
 export async function getEvent(id: string): Promise<Event | null> {
   if (!isSupabaseConfigured()) {
-    const found = getDemoEvents().find((event) => event.id === id);
-    return found ? resolveDemoStatus(found) : null;
+    const found = fallbackEvents.find((event) => event.id === id);
+    return found ? resolveFallbackStatus(found) : null;
   }
 
   const admin = createSupabaseAdminClient();
   if (!admin) {
-    const found = getDemoEvents().find((event) => event.id === id);
-    return found ? resolveDemoStatus(found) : null;
+    const found = fallbackEvents.find((event) => event.id === id);
+    return found ? resolveFallbackStatus(found) : null;
   }
 
   const { data, error } = await admin
@@ -109,7 +105,7 @@ export type EventInput = {
 export type CreateEventResult = { ok: true; id: string } | { ok: false; error: string };
 export type MutationResult = { ok: true } | { ok: false; error: string };
 
-/** Creates an event with a fresh random QR token and computed expiry (WIB→UTC). */
+/** Creates an event with a fresh random QR token and computed expiry (WIB to UTC). */
 export async function createEvent(input: EventInput, createdBy?: string): Promise<CreateEventResult> {
   const admin = createSupabaseAdminClient();
   if (!admin) return { ok: false, error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." };
@@ -218,10 +214,10 @@ type MemberLite = { id: string; member_number: string; full_name: string; nik: s
  */
 export async function getEventAttendanceRows(eventId: string): Promise<EventAttendanceRow[]> {
   if (!isSupabaseConfigured()) {
-    return demoMembers
+    return fallbackMembers
       .filter((member) => member.status === "aktif")
       .map((member) => {
-        const attendance = demoAttendances.find((item) => item.eventId === eventId && item.memberId === member.id);
+        const attendance = fallbackAttendances.find((item) => item.eventId === eventId && item.memberId === member.id);
         return {
           memberId: member.id,
           memberNumber: member.memberNumber,

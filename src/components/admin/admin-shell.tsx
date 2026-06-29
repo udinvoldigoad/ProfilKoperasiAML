@@ -90,7 +90,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </button>
               <div>
                 <p className="text-sm font-bold text-primary">Agro Mulyo Lestari</p>
-                <p className="text-xs text-muted-text">Mode demo lokal, Supabase-ready</p>
+                <p className="text-xs text-muted-text">Portal produksi koperasi</p>
               </div>
             </div>
 

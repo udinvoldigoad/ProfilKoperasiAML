@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ShieldCheck, UserRound } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
@@ -37,37 +37,20 @@ export default async function LoginPage({
             {configured ? (
               <LoginForm next={next} whatsapp={whatsapp} />
             ) : (
-              <div className="grid gap-4">
-                <p className="rounded-lg bg-surface-container-low px-4 py-3 text-center text-sm text-on-surface-variant">
-                  Mode demo aktif — Supabase belum dikonfigurasi. Masuk tanpa kredensial untuk menjelajah portal.
-                </p>
-                <form action="/api/auth/demo-login" method="post">
-                  <input type="hidden" name="role" value="admin" />
-                  <input type="hidden" name="next" value="/admin/dashboard" />
-                  <button
-                    type="submit"
-                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white"
-                  >
-                    <ShieldCheck size={18} aria-hidden="true" />
-                    Masuk sebagai Admin (Demo)
-                  </button>
-                </form>
-                <form action="/api/auth/demo-login" method="post">
-                  <input type="hidden" name="role" value="anggota" />
-                  <input type="hidden" name="next" value="/anggota/dashboard" />
-                  <button
-                    type="submit"
-                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary-container"
-                  >
-                    <UserRound size={18} aria-hidden="true" />
-                    Masuk sebagai Anggota (Demo)
-                  </button>
-                </form>
+              <div className="grid gap-4 text-center">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-error/10 text-error">
+                  <AlertTriangle size={28} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-primary">Login belum aktif</h2>
+                  <p className="mt-2 text-sm text-on-surface-variant">
+                    Backend Supabase belum dikonfigurasi. Hubungi admin untuk mengaktifkan portal admin dan anggota.
+                  </p>
+                </div>
               </div>
             )}
           </Card>
 
-          {/* In demo mode there are no login tabs, so show the register CTA at page level. */}
           {!configured ? <RegisterCta whatsapp={whatsapp} /> : null}
         </div>
       </section>

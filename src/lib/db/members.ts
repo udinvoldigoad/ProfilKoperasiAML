@@ -1,5 +1,5 @@
 import type { Member, MemberStatus, MemberType } from "@/types";
-import { members as demoMembers } from "@/lib/data";
+import { members as fallbackMembers } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -44,12 +44,32 @@ function mapMemberRow(row: MemberRow): Member {
   };
 }
 
-/** All active (non-deleted) members. Falls back to demo data when unconfigured. */
+function memberTypeRank(type: MemberType) {
+  return type === "anggota_lama" ? 0 : 1;
+}
+
+function memberNumberRank(value: string) {
+  const numeric = parseInt(value, 10);
+  return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
+}
+
+function sortMembers(list: Member[]) {
+  return [...list].sort((a, b) => {
+    const typeDiff = memberTypeRank(a.memberType) - memberTypeRank(b.memberType);
+    if (typeDiff !== 0) return typeDiff;
+
+    const numberDiff = memberNumberRank(a.memberNumber) - memberNumberRank(b.memberNumber);
+    if (numberDiff !== 0) return numberDiff;
+
+    return a.memberNumber.localeCompare(b.memberNumber, "id", { numeric: true, sensitivity: "base" });
+  });
+}
+/** All active (non-deleted) members. Falls back to local seed data when unconfigured. */
 export async function listMembers(): Promise<Member[]> {
-  if (!isSupabaseConfigured()) return demoMembers;
+  if (!isSupabaseConfigured()) return sortMembers(fallbackMembers);
 
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return demoMembers;
+  if (!supabase) return sortMembers(fallbackMembers);
 
   const { data, error } = await supabase
     .from("members")
@@ -57,18 +77,18 @@ export async function listMembers(): Promise<Member[]> {
     .is("deleted_at", null)
     .order("member_number", { ascending: true });
 
-  if (error || !data) return demoMembers;
-  return (data as MemberRow[]).map(mapMemberRow);
+  if (error || !data) return sortMembers(fallbackMembers);
+  return sortMembers((data as MemberRow[]).map(mapMemberRow));
 }
 
-/** Single member by id. Falls back to demo data when unconfigured. */
+/** Single member by id. Falls back to local seed data when unconfigured. */
 export async function getMember(id: string): Promise<Member | null> {
   if (!isSupabaseConfigured()) {
-    return demoMembers.find((member) => member.id === id) ?? null;
+    return fallbackMembers.find((member) => member.id === id) ?? null;
   }
 
   const supabase = await createSupabaseServerClient();
-  if (!supabase) return demoMembers.find((member) => member.id === id) ?? null;
+  if (!supabase) return fallbackMembers.find((member) => member.id === id) ?? null;
 
   const { data, error } = await supabase
     .from("members")
@@ -88,11 +108,11 @@ export async function getMember(id: string): Promise<Member | null> {
  */
 export async function getMemberForSession(id: string): Promise<Member | null> {
   if (!isSupabaseConfigured()) {
-    return demoMembers.find((member) => member.id === id) ?? null;
+    return fallbackMembers.find((member) => member.id === id) ?? null;
   }
 
   const admin = createSupabaseAdminClient();
-  if (!admin) return demoMembers.find((member) => member.id === id) ?? null;
+  if (!admin) return fallbackMembers.find((member) => member.id === id) ?? null;
 
   const { data, error } = await admin
     .from("members")
@@ -106,7 +126,7 @@ export async function getMemberForSession(id: string): Promise<Member | null> {
 }
 
 export type CreateMemberInput = {
-  /** Optional — left blank, the next sequential number (1, 2, 3, …) is assigned. */
+  /** Optional; left blank, the next sequential number for this member type is assigned. */
   memberNumber?: string;
   fullName: string;
   nik: string;
@@ -131,11 +151,16 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
     return { ok: false, error: "Service role belum dikonfigurasi (SUPABASE_SERVICE_ROLE_KEY)." };
   }
 
-  // Member numbers are plain sequential integers (the village uses 1, 2, 3, …).
-  // When the admin leaves it blank, assign max(existing) + 1.
+  // Member numbers are sequential per member type. Anggota lama and anggota baru
+  // can both have number 1, 2, 3, and so on.
   let memberNumber = input.memberNumber?.trim() ?? "";
   if (!memberNumber) {
-    const { data: rows } = await admin.from("members").select("member_number");
+    const { data: rows } = await admin
+      .from("members")
+      .select("member_number")
+      .eq("member_type", input.memberType)
+      .is("deleted_at", null);
+
     const max = (rows ?? []).reduce((highest, row) => {
       const value = parseInt(String((row as { member_number: string }).member_number), 10);
       return Number.isFinite(value) && value > highest ? value : highest;
@@ -143,16 +168,26 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
     memberNumber = String(max + 1);
   }
 
-  // Reject duplicate NIK / member number early for a clear message.
-  const { data: existing } = await admin
+  const { data: existingNik } = await admin
     .from("members")
     .select("id")
-    .or(`nik.eq.${input.nik},member_number.eq.${memberNumber}`)
+    .eq("nik", input.nik)
+    .is("deleted_at", null)
     .maybeSingle();
-  if (existing) {
-    return { ok: false, error: "NIK atau No Anggota sudah terdaftar." };
+  if (existingNik) {
+    return { ok: false, error: "NIK sudah terdaftar." };
   }
 
+  const { data: existingNumber } = await admin
+    .from("members")
+    .select("id")
+    .eq("member_type", input.memberType)
+    .eq("member_number", memberNumber)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (existingNumber) {
+    return { ok: false, error: "No Anggota untuk tipe anggota ini sudah terdaftar." };
+  }
   const email = memberNikToAuthEmail(input.nik);
   const { data: created, error: authError } = await admin.auth.admin.createUser({
     email,

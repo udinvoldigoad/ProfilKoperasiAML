@@ -25,8 +25,5 @@ export async function POST(request: NextRequest) {
     await supabase.auth.signOut();
   }
 
-  // Also clear demo cookies.
-  response.cookies.delete("aml_admin_demo_session");
-  response.cookies.delete("aml_member_demo_session");
   return response;
 }

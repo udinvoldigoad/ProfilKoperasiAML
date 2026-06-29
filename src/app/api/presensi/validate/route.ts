@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { attendances, getDemoEvents } from "@/lib/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { parseQrToken, resolveEventStatus } from "@/lib/utils";
 
@@ -30,35 +29,6 @@ function isExpired(value: string | null) {
   return Number.isFinite(expiry) && expiry < Date.now();
 }
 
-function validateDemoAttendance(token: string, memberId: string) {
-  const event = getDemoEvents().find((item) => item.qrToken === token);
-
-  if (!event) {
-    return NextResponse.json({ ok: false, message: "QR Code tidak valid atau sudah kedaluwarsa." }, { status: 400 });
-  }
-
-  const demoStatus = resolveEventStatus(event.date, event.startTime, event.endTime, event.status);
-  if (demoStatus !== "aktif" || isExpired(event.qrExpiresAt)) {
-    return NextResponse.json({ ok: false, message: "Presensi belum dibuka atau acara sudah selesai." }, { status: 400 });
-  }
-
-  const alreadyPresent = attendances.some((attendance) => attendance.eventId === event.id && attendance.memberId === memberId);
-  if (alreadyPresent) {
-    return NextResponse.json({ ok: false, message: "Anda sudah melakukan presensi pada acara ini." }, { status: 409 });
-  }
-
-  return NextResponse.json({
-    ok: true,
-    message: `Presensi demo berhasil untuk ${event.title}. Mode demo belum menyimpan permanen.`,
-    result: {
-      eventTitle: event.title,
-      memberName: "Ahmad Sulaiman",
-      attendedAt: new Date().toISOString(),
-      method: "QR Code"
-    }
-  });
-}
-
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { token?: string };
   const token = parseQrToken(body.token || "");
@@ -79,11 +49,6 @@ export async function POST(request: NextRequest) {
   if (session.member.status !== "aktif") {
     return NextResponse.json({ ok: false, message: "Akun anggota belum aktif untuk melakukan presensi." }, { status: 403 });
   }
-
-  if (session.demo) {
-    return validateDemoAttendance(token, session.member.id);
-  }
-
   const supabase = createSupabaseAdminClient();
   if (!supabase) {
     return NextResponse.json(

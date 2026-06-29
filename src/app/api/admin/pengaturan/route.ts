@@ -10,9 +10,6 @@ export async function POST(request: NextRequest) {
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Hanya admin yang diizinkan." }, { status: 403 });
   }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 });
-  }
 
   let body: unknown;
   try {

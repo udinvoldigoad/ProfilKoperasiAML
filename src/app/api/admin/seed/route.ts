@@ -13,7 +13,7 @@ type EnsureAuthResult =
 
 /**
  * One-time seeding for real auth. Creates the admin auth user, one auth user per
- * demo member (NIK-based email), matching profiles/members rows, and demo events
+ * initial members (NIK-based email), matching profiles/members rows, and initial events
  * so QR tokens shown in admin can be validated against Supabase.
  *
  *   POST /api/admin/seed   header: x-seed-secret: <SEED_SECRET>
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     else result.membersLinked += 1;
   }
 
-  // 3. Demo events for QR validation.
+  // 3. Initial events for QR validation.
   for (const event of events) {
     const { error } = await supabase.from("events").upsert(
       {

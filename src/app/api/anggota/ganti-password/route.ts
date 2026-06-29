@@ -10,9 +10,6 @@ export async function POST(request: NextRequest) {
   if (!session || session.role !== "anggota" || !session.member) {
     return NextResponse.json({ error: "Sesi anggota tidak ditemukan." }, { status: 401 });
   }
-  if (session.demo) {
-    return NextResponse.json({ error: "Mode demo tidak menyimpan data." }, { status: 503 });
-  }
 
   let body: { newPassword?: string };
   try {

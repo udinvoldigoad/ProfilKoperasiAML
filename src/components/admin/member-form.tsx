@@ -32,7 +32,7 @@ const EMPTY: FormState = {
 };
 
 const TEXT_FIELDS: Array<{ key: keyof FormState; label: string; placeholder: string; type?: string; numeric?: boolean; hint?: string }> = [
-  { key: "memberNumber", label: "No Anggota", placeholder: "Otomatis bila dikosongkan", hint: "Nomor urut otomatis (1, 2, 3, …) jika dibiarkan kosong" },
+  { key: "memberNumber", label: "No Anggota", placeholder: "Otomatis bila dikosongkan", hint: "Otomatis mengikuti tipe anggota yang dipilih." },
   { key: "fullName", label: "Nama Lengkap", placeholder: "Nama anggota" },
   { key: "nik", label: "NIK", placeholder: "16 digit angka", numeric: true },
   { key: "birthPlace", label: "Tempat Lahir", placeholder: "Lampung Timur" },
@@ -137,8 +137,8 @@ export function MemberForm({ mode = "create", memberId, initial }: MemberFormPro
           value={form.memberType}
           onChange={(event) => update("memberType", event.target.value as FormState["memberType"])}
         >
-          <option value="anggota_lama">anggota_lama</option>
-          <option value="anggota_baru">anggota_baru</option>
+          <option value="anggota_lama">Anggota Lama</option>
+          <option value="anggota_baru">Anggota Baru</option>
         </select>
       </label>
       <label className="grid gap-2 text-sm font-bold text-primary">

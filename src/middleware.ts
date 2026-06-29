@@ -21,18 +21,10 @@ export async function middleware(request: NextRequest) {
   const isAdminArea = pathname.startsWith("/admin");
   const isMemberArea = pathname.startsWith("/anggota") || pathname === "/presensi/scan";
 
-  // Demo fallback: when Supabase is not configured, gate on demo cookies.
   if (!isSupabaseConfigured()) {
-    if (isAdminArea && request.cookies.get("aml_admin_demo_session")?.value !== "1") {
-      return loginRedirect(request);
-    }
-    if (isMemberArea && request.cookies.get("aml_member_demo_session")?.value !== "1") {
-      return loginRedirect(request);
-    }
-    return NextResponse.next();
+    return loginRedirect(request);
   }
 
-  // Real Supabase session.
   const { response, user, role, mustChangePassword } = await getMiddlewareSession(request);
 
   if (!user) {
@@ -47,7 +39,6 @@ export async function middleware(request: NextRequest) {
     return dashboardRedirect(request, "/admin/dashboard");
   }
 
-  // Members on their initial (NIK) password must change it before doing anything else.
   const changePasswordPath = "/anggota/ganti-password";
   if (role === "anggota" && mustChangePassword && pathname !== changePasswordPath) {
     return dashboardRedirect(request, changePasswordPath);

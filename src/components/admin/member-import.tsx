@@ -96,10 +96,10 @@ export function MemberImport() {
           <div>
             <h2 className="text-xl font-bold text-primary">Upload file .xlsx</h2>
             <p className="mt-2 text-sm text-on-surface-variant">
-              Kolom: <strong>A</strong> No Anggota, <strong>B</strong> Nama, <strong>C</strong> NIK, <strong>D</strong> Tempat
-              Lahir, <strong>E</strong> Tanggal Lahir (YYYY-MM-DD), <strong>F</strong> Alamat, <strong>G</strong> Email,
-              <strong> H</strong> No HP. Baris 1 = judul kolom. Baris ber-<em>highlight kuning</em> dideteksi sebagai
-              anggota baru.
+              Format desa: <strong>No</strong>, <strong>Nama Anggota</strong>, <strong>No Anggota</strong>, <strong>NIK</strong>,
+              <strong> Tempat Lahir</strong>, <strong>Tanggal Lahir</strong>, <strong>Alamat</strong>, dan <strong>No HP</strong>.
+              Kolom <strong>Email</strong> serta <strong>Tipe/Jenis Anggota</strong> boleh ditambahkan bila ada. Jika tipe tidak ada,
+              sistem membaca sheet bantu <em>nama anggota baru</em> / <em>nama pendiri</em> bila tersedia.
             </p>
           </div>
         </div>
@@ -169,10 +169,11 @@ export function MemberImport() {
           ) : null}
         </div>
         <div className="overflow-x-auto table-scroll">
-          <table className="w-full min-w-[640px] text-left">
+          <table className="w-full min-w-[760px] text-left">
             <thead className="bg-surface-gray text-sm text-on-surface-variant">
               <tr>
                 <th className="px-5 py-3">Baris</th>
+                <th className="px-5 py-3">No Anggota</th>
                 <th className="px-5 py-3">Nama</th>
                 <th className="px-5 py-3">NIK</th>
                 <th className="px-5 py-3">Tipe</th>
@@ -182,7 +183,7 @@ export function MemberImport() {
             <tbody className="divide-y divide-border-subtle">
               {!rows ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-muted-text">
+                  <td colSpan={6} className="px-5 py-10 text-center text-muted-text">
                     Unggah file lalu klik Preview Import.
                   </td>
                 </tr>
@@ -190,6 +191,7 @@ export function MemberImport() {
                 rows.map((row) => (
                   <tr key={row.row} className={row.memberType === "anggota_baru" ? "bg-amber-50" : "bg-white"}>
                     <td className="px-5 py-4">{row.row}</td>
+                    <td className="px-5 py-4">{row.memberNumber || "-"}</td>
                     <td className="px-5 py-4 font-bold">{row.fullName || "-"}</td>
                     <td className="px-5 py-4">{row.nik || "-"}</td>
                     <td className="px-5 py-4">{row.memberType === "anggota_baru" ? "Anggota Baru" : "Anggota Lama"}</td>
