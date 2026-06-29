@@ -169,6 +169,63 @@ export async function createMember(input: CreateMemberInput): Promise<CreateMemb
   }
 }
 
+export async function updateMemberFromImportByNik(input: CreateMemberInput): Promise<MutationResult> {
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
+
+  try {
+    const existing = await prisma.member.findUnique({
+      where: { nik: input.nik },
+      select: { id: true, profileId: true }
+    });
+    if (!existing) return { ok: false, error: "NIK belum terdaftar." };
+
+    const memberNumber = input.memberNumber?.trim();
+    if (memberNumber) {
+      const numberOwner = await prisma.member.findFirst({
+        where: {
+          memberType: input.memberType,
+          memberNumber,
+          deletedAt: null,
+          NOT: { id: existing.id }
+        },
+        select: { id: true }
+      });
+      if (numberOwner) return { ok: false, error: "No Anggota untuk tipe anggota ini sudah dipakai anggota lain." };
+    }
+
+    await prisma.member.update({
+      where: { id: existing.id },
+      data: {
+        ...(memberNumber ? { memberNumber } : {}),
+        fullName: input.fullName,
+        birthPlace: input.birthPlace,
+        birthDate: dateInput(input.birthDate),
+        address: input.address,
+        email: input.email || null,
+        phone: input.phone || null,
+        memberType: input.memberType,
+        status: input.status,
+        deletedAt: null,
+        ...(existing.profileId
+          ? {
+              profile: {
+                update: {
+                  email: input.email?.toLowerCase() || null,
+                  phone: input.phone || null
+                }
+              }
+            }
+          : {})
+      }
+    });
+
+    return { ok: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Gagal memperbarui anggota dari import.";
+    if (/Unique constraint|duplicate|P2002/i.test(message)) return { ok: false, error: "Data anggota bentrok dengan anggota lain." };
+    return { ok: false, error: message };
+  }
+}
 export type UpdateMemberInput = {
   fullName: string;
   birthPlace: string;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import ExcelJS from "exceljs";
 import { getSessionUser } from "@/lib/auth";
 import { isValidNik, normalizeNik } from "@/lib/auth-identifiers";
-import { createMember, type CreateMemberInput } from "@/lib/db/members";
+import { createMember, updateMemberFromImportByNik, type CreateMemberInput } from "@/lib/db/members";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
 import type { MemberType } from "@/types";
 
@@ -53,11 +53,6 @@ function cellText(cell: ExcelJS.Cell): string {
   return String(cell.text ?? value ?? "").trim();
 }
 
-function excelSerialDateToIso(serial: number): string {
-  const utc = Date.UTC(1899, 11, 30) + Math.round(serial) * 24 * 60 * 60 * 1000;
-  return new Date(utc).toISOString().slice(0, 10);
-}
-
 function normalizeYear(value: string): number {
   const year = Number(value);
   if (value.length === 2) return year >= 50 ? 1900 + year : 2000 + year;
@@ -87,16 +82,37 @@ function parseDateText(text: string): string | null {
   return null;
 }
 
+function shouldSwapAmbiguousExcelDate(cell: ExcelJS.Cell): boolean {
+  const format = cell.numFmt?.toLowerCase().trim() ?? "";
+  return !/^y{2,4}[-/.]/.test(format);
+}
+
+function importedDateObjectToIso(value: Date, swapAmbiguous: boolean): string {
+  const year = value.getUTCFullYear();
+  const storedMonth = value.getUTCMonth() + 1;
+  const storedDay = value.getUTCDate();
+  const isAmbiguous = storedMonth <= 12 && storedDay <= 12;
+  const month = swapAmbiguous && isAmbiguous ? storedDay : storedMonth;
+  const day = swapAmbiguous && isAmbiguous ? storedMonth : storedDay;
+
+  return isoDateFromParts(year, month, day) ?? value.toISOString().slice(0, 10);
+}
+
+function excelSerialDateToIso(cell: ExcelJS.Cell, serial: number): string {
+  const utc = Date.UTC(1899, 11, 30) + Math.round(serial) * 24 * 60 * 60 * 1000;
+  return importedDateObjectToIso(new Date(utc), shouldSwapAmbiguousExcelDate(cell));
+}
+
 function cellDate(cell: ExcelJS.Cell): string {
   const displayedDate = parseDateText(cell.text ?? "");
   if (displayedDate) return displayedDate;
 
+  const value = cell.value;
+  if (value instanceof Date) return importedDateObjectToIso(value, shouldSwapAmbiguousExcelDate(cell));
+  if (typeof value === "number" && Number.isFinite(value)) return excelSerialDateToIso(cell, value);
+
   const textDate = parseDateText(cellText(cell));
   if (textDate) return textDate;
-
-  const value = cell.value;
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "number" && Number.isFinite(value)) return excelSerialDateToIso(value);
 
   return cellText(cell);
 }
@@ -267,6 +283,7 @@ export async function POST(request: NextRequest) {
   }
 
   let created = 0;
+  let updated = 0;
   let skipped = 0;
   const errors: string[] = [];
 
@@ -286,6 +303,10 @@ export async function POST(request: NextRequest) {
     const result = await createMember(input);
     if (result.ok) {
       created += 1;
+    } else if (/nik sudah terdaftar/i.test(result.error)) {
+      const updateResult = await updateMemberFromImportByNik(input);
+      if (updateResult.ok) updated += 1;
+      else errors.push(`Baris ${row.row} (${row.nik}): ${updateResult.error}`);
     } else if (/sudah terdaftar|already|exists/i.test(result.error)) {
       skipped += 1;
     } else {
@@ -297,9 +318,9 @@ export async function POST(request: NextRequest) {
     actorProfileId: session.profileId,
     action: "import",
     entityType: "members",
-    summary: `Import anggota: ${created} dibuat, ${skipped} dilewati`,
+    summary: `Import anggota: ${created} dibuat, ${updated} diperbarui, ${skipped} dilewati`,
     ipAddress: clientIp(request)
   });
 
-  return NextResponse.json({ ok: true, created, skipped, errors });
+  return NextResponse.json({ ok: true, created, updated, skipped, errors });
 }

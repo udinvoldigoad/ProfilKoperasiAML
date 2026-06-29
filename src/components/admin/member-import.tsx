@@ -22,7 +22,7 @@ type ImportRow = {
   error?: string;
 };
 
-type CommitResult = { created: number; skipped: number; errors: string[] };
+type CommitResult = { created: number; updated: number; skipped: number; errors: string[] };
 
 export function MemberImport() {
   const router = useRouter();
@@ -76,8 +76,8 @@ export function MemberImport() {
         setError(data.error ?? "Gagal mengimpor.");
         return;
       }
-      setResult({ created: data.created, skipped: data.skipped, errors: data.errors ?? [] });
-      notify(`Import selesai: ${data.created} anggota ditambahkan.`);
+      setResult({ created: data.created, updated: data.updated ?? 0, skipped: data.skipped, errors: data.errors ?? [] });
+      notify(`Import selesai: ${data.created} dibuat, ${data.updated ?? 0} diperbarui.`);
       router.refresh();
     } catch {
       setError("Tidak dapat terhubung ke server.");
@@ -137,7 +137,7 @@ export function MemberImport() {
 
         {result ? (
           <div className="mt-4 grid gap-2 rounded-lg bg-green-100 px-4 py-3 text-sm font-bold text-green-800">
-            <p>Import selesai: {result.created} dibuat, {result.skipped} dilewati (sudah ada).</p>
+            <p>Import selesai: {result.created} dibuat, {result.updated} diperbarui, {result.skipped} dilewati.</p>
             {result.errors.length > 0 ? (
               <ul className="list-disc pl-5 font-normal">
                 {result.errors.map((message) => (
