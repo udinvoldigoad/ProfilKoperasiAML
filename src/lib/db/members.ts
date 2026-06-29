@@ -299,6 +299,17 @@ export async function updateMemberProfile(id: string, input: UpdateMemberProfile
   }
 }
 
+export async function updateMemberPhoto(id: string, photoUrl: string): Promise<MutationResult> {
+  if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };
+
+  try {
+    await prisma.member.update({ where: { id }, data: { photoUrl } });
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Gagal memperbarui foto profil." };
+  }
+}
+
 /** Soft-deletes a member: sets deleted_at and marks the row nonaktif. */
 export async function softDeleteMember(id: string): Promise<MutationResult> {
   if (!isDatabaseConfigured()) return { ok: false, error: "Database MySQL belum dikonfigurasi." };

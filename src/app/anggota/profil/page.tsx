@@ -21,7 +21,8 @@ export default async function ProfilAnggotaPage() {
             birthPlace: member.birthPlace,
             birthDate: member.birthDate,
             address: member.address,
-            phone: member.phone ?? ""
+            phone: member.phone ?? "",
+            photoUrl: member.photoUrl ?? ""
           }}
           info={{
             memberNumber: member.memberNumber,

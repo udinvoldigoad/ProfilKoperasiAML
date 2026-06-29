@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Save, UserRound } from "lucide-react";
-import { useState } from "react";
+import { Camera, CheckCircle2, ImageUp, Save, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -14,11 +14,18 @@ type ProfilFormState = {
   phone: string;
 };
 
+type ProfilFormInitial = ProfilFormState & {
+  photoUrl: string;
+};
+
 type ReadOnlyInfo = {
   memberNumber: string;
   nik: string;
   status: string;
 };
+
+const PROFILE_PHOTO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const PROFILE_PHOTO_MAX_FILE_SIZE = 4 * 1024 * 1024;
 
 const FIELDS: Array<{ key: keyof ProfilFormState; label: string; placeholder: string; type?: string; required?: boolean }> = [
   { key: "fullName", label: "Nama Lengkap", placeholder: "Nama lengkap Anda", required: true },
@@ -28,15 +35,87 @@ const FIELDS: Array<{ key: keyof ProfilFormState; label: string; placeholder: st
   { key: "address", label: "Alamat", placeholder: "Alamat lengkap", required: true }
 ];
 
-export function ProfilForm({ initial, info }: { initial: ProfilFormState; info: ReadOnlyInfo }) {
+export function ProfilForm({ initial, info }: { initial: ProfilFormInitial; info: ReadOnlyInfo }) {
   const router = useRouter();
-  const [form, setForm] = useState<ProfilFormState>(initial);
+  const { photoUrl: initialPhotoUrl, ...profileInitial } = initial;
+  const [form, setForm] = useState<ProfilFormState>(profileInitial);
+  const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState(initialPhotoUrl);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoSuccess, setPhotoSuccess] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreview(photoUrl);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(photoFile);
+    setPhotoPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [photoFile, photoUrl]);
+
   function update<K extends keyof ProfilFormState>(key: K, value: ProfilFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handlePhotoSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setPhotoError(null);
+    setPhotoSuccess(false);
+
+    if (!file) {
+      setPhotoFile(null);
+      return;
+    }
+
+    if (!PROFILE_PHOTO_ALLOWED_TYPES.includes(file.type)) {
+      setPhotoFile(null);
+      setPhotoError("Format foto harus JPG, PNG, atau WEBP.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > PROFILE_PHOTO_MAX_FILE_SIZE) {
+      setPhotoFile(null);
+      setPhotoError("Ukuran foto maksimal 4 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setPhotoFile(file);
+  }
+
+  async function handlePhotoSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!photoFile) return;
+
+    setPhotoError(null);
+    setPhotoSuccess(false);
+    setPhotoLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", photoFile);
+      const response = await fetch("/api/anggota/profil/foto", { method: "POST", body: formData });
+      const data = await response.json();
+      if (!response.ok) {
+        setPhotoError(data.error ?? "Gagal menyimpan foto.");
+        return;
+      }
+      setPhotoUrl(data.photoUrl);
+      setPhotoFile(null);
+      setPhotoSuccess(true);
+      router.refresh();
+    } catch {
+      setPhotoError("Tidak dapat terhubung ke server. Coba lagi.");
+    } finally {
+      setPhotoLoading(false);
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -71,8 +150,40 @@ export function ProfilForm({ initial, info }: { initial: ProfilFormState; info: 
     <>
       <Card>
         <div className="flex flex-col items-center gap-6 text-center md:flex-row md:items-start md:text-left">
-          <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl bg-primary-container text-white">
-            <UserRound size={54} strokeWidth={2.3} aria-hidden="true" />
+          <div className="grid shrink-0 justify-items-center gap-3">
+            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-primary-container text-white">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Foto profil anggota" className="h-full w-full object-cover" />
+              ) : (
+                <UserRound size={54} strokeWidth={2.3} aria-hidden="true" />
+              )}
+            </div>
+            <form className="flex flex-wrap justify-center gap-2" onSubmit={handlePhotoSubmit}>
+              <input
+                id="profile-photo-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handlePhotoSelect}
+              />
+              <label
+                htmlFor="profile-photo-input"
+                className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 text-xs font-bold text-primary transition hover:bg-surface-gray"
+              >
+                <Camera size={16} aria-hidden="true" />
+                Pilih Foto
+              </label>
+              <button
+                type="submit"
+                disabled={!photoFile || photoLoading}
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary-container px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <ImageUp size={16} aria-hidden="true" />
+                {photoLoading ? "Menyimpan..." : "Simpan Foto"}
+              </button>
+            </form>
+            {photoError ? <p className="max-w-52 text-xs font-bold text-error" role="alert">{photoError}</p> : null}
+            {photoSuccess ? <p className="max-w-52 text-xs font-bold text-green-700">Foto tersimpan.</p> : null}
           </div>
           <div className="w-full flex-1">
             <div className="grid gap-3 sm:grid-cols-3">
