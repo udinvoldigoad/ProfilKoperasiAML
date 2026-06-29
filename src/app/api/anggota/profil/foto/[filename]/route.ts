@@ -1,15 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
 import { isSafeProfilePhotoFilename, profilePhotoContentType, profilePhotoUploadDirectory } from "@/lib/profile-photo-storage";
 
 export const runtime = "nodejs";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ filename: string }> }) {
-  const session = await getSessionUser();
-  if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-
   const { filename } = await params;
   if (!isSafeProfilePhotoFilename(filename)) {
     return NextResponse.json({ error: "Nama file tidak valid." }, { status: 400 });
@@ -20,7 +16,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ fil
     return new NextResponse(bytes, {
       headers: {
         "Content-Type": profilePhotoContentType(filename),
-        "Cache-Control": "private, max-age=86400"
+        "Cache-Control": "public, max-age=86400"
       }
     });
   } catch {

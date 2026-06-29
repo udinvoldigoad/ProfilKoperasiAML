@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { UserRound } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { boardMembers } from "@/lib/data";
+import { listBoardMembers } from "@/lib/db/board-members";
 import { cn } from "@/lib/utils";
 import type { BoardMember } from "@/types";
 
@@ -77,7 +77,8 @@ function ChartConnector({ parentCount, childCount }: { parentCount: number; chil
   );
 }
 
-export function ProfileStructureSection() {
+export async function ProfileStructureSection() {
+  const boardMembers = await listBoardMembers();
   const sorted = [...boardMembers].sort((a, b) => a.level - b.level || a.sortOrder - b.sortOrder);
   const isPengawas = (person: BoardMember) => /pengawas/i.test(person.position);
   const pengawas = sorted.filter(isPengawas);

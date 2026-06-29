@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { clientIp, logAudit } from "@/lib/db/audit-logs";
+import { updateBoardMemberPhotoByName } from "@/lib/db/board-members";
 import { getMemberForSession, updateMemberPhoto } from "@/lib/db/members";
 import {
   PROFILE_PHOTO_ALLOWED_TYPES,
@@ -68,14 +70,20 @@ export async function POST(request: NextRequest) {
     await rm(join(directory, previousFilename), { force: true }).catch(() => undefined);
   }
 
+  const boardPhotoUpdated = await updateBoardMemberPhotoByName(member.fullName, photoUrl);
+  if (boardPhotoUpdated) {
+    revalidatePath("/");
+    revalidatePath("/struktur");
+  }
+
   await logAudit({
     actorProfileId: session.profileId,
     action: "update",
     entityType: "members",
     entityId: session.member.id,
-    summary: "Mengganti foto profil anggota",
+    summary: boardPhotoUpdated ? "Mengganti foto profil anggota dan struktur pengurus" : "Mengganti foto profil anggota",
     ipAddress: clientIp(request)
   });
 
-  return NextResponse.json({ ok: true, photoUrl });
+  return NextResponse.json({ ok: true, photoUrl, boardPhotoUpdated });
 }
