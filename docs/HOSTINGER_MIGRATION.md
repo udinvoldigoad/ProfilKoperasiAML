@@ -85,3 +85,12 @@ Di import Excel:
 highlight kuning -> anggota_lama
 tanpa highlight  -> anggota_baru
 ```
+## Fallback phpMyAdmin
+
+Jika SSH Hostinger gagal menjalankan `npx prisma db push` karena limit proses, buka phpMyAdmin lalu jalankan file SQL berikut pada database MySQL koperasi:
+
+```txt
+docs/hostinger-mysql-init.sql
+```
+
+Setelah SQL sukses, lanjutkan seed admin lewat endpoint `/api/admin/seed`.
