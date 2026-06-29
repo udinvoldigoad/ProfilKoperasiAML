@@ -36,8 +36,8 @@ Portal admin dan anggota membutuhkan `DATABASE_URL` MySQL di `.env.local`.
 
 ## Halaman Utama
 
-- Publik: `/`, `/unit`, `/struktur`, `/pengumuman`, `/login`, `/signup`
-- Admin: `/admin/dashboard`, `/admin/anggota`, `/admin/anggota/import`, `/admin/acara`, `/admin/laporan`, `/admin/audit-log`, `/admin/pengaturan`
+- Publik: `/`, `/galeri`, `/unit`, `/struktur`, `/pengumuman`, `/login`, `/signup`
+- Admin: `/admin/dashboard`, `/admin/anggota`, `/admin/anggota/import`, `/admin/acara`, `/admin/galeri`, `/admin/laporan`, `/admin/audit-log`, `/admin/pengaturan`
 - Anggota: `/anggota/dashboard`, `/anggota/profil`, `/anggota/acara`, `/anggota/riwayat-kehadiran`
 - Presensi: `/presensi/scan`
 
@@ -49,6 +49,7 @@ Portal admin dan anggota membutuhkan `DATABASE_URL` MySQL di `.env.local`.
 ```env
 DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DATABASE"
 AUTH_SECRET="isi-string-acak-panjang"
+GALLERY_UPLOAD_DIR="/home/USER/gallery-uploads" # optional
 ```
 
 3. Generate Prisma client:
@@ -98,7 +99,7 @@ Kolom `Email` dan `Tipe/Jenis Anggota` boleh ditambahkan. Jika tipe tidak ada, s
 - Admin reset password anggota mengembalikan password ke NIK.
 - Nomor anggota unik per tipe anggota, bukan global.
 - Export data admin menggunakan Excel `.xlsx`.
-- File upload produksi sebaiknya disimpan di storage/folder hosting, sedangkan MySQL hanya menyimpan path file.
+- Upload galeri disimpan di folder storage hosting (`GALLERY_UPLOAD_DIR` jika diisi, default `./storage/gallery`), sedangkan MySQL hanya menyimpan metadata dan path file.
 
 ## Backup
 

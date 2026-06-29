@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ChevronDown, ChevronRight, MapPin, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, ChevronRight, Images, MapPin, ShieldCheck, Users } from "lucide-react";
 import { GalleryCarousel } from "@/components/public/gallery-carousel";
 import { ProfileAnnouncementsSection } from "@/components/public/profile-announcements-section";
 import { ProfileStructureSection } from "@/components/public/profile-structure-section";
@@ -10,14 +10,19 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Card } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { galleryItems, products } from "@/lib/data";
+import { products } from "@/lib/data";
 import { listAnnouncements } from "@/lib/db/announcements";
+import { listHomepageGalleryItems } from "@/lib/db/gallery";
 import { getSiteProfile } from "@/lib/db/settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [siteProfile, announcements] = await Promise.all([getSiteProfile(), listAnnouncements()]);
+  const [siteProfile, announcements, homepageGalleryItems] = await Promise.all([
+    getSiteProfile(),
+    listAnnouncements(),
+    listHomepageGalleryItems()
+  ]);
   return (
     <PublicShell>
       {/* HERO */}
@@ -176,7 +181,13 @@ export default async function HomePage() {
             title="Dokumentasi kegiatan dan potensi desa"
             description="Sekilas potret kegiatan koperasi dan potensi pertanian Desa Giri Mulyo."
           />
-          <GalleryCarousel items={galleryItems} />
+          <GalleryCarousel items={homepageGalleryItems} />
+          <div className="mt-6 flex justify-end">
+            <ButtonLink href="/galeri" variant="secondary">
+              <Images size={18} aria-hidden="true" />
+              Lihat Foto Lainnya
+            </ButtonLink>
+          </div>
           <div className="mt-10 flex flex-col items-center gap-4 rounded-3xl border border-border-subtle bg-surface-gray p-8 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
               <h3 className="text-xl font-bold text-primary">Ingin mengenal unit usaha kami?</h3>

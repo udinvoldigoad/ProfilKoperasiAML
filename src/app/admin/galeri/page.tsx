@@ -1,26 +1,30 @@
 import { AdminPageHeader } from "@/components/admin/page-header";
+import { GalleryUploadForm } from "@/components/admin/gallery-upload-form";
 import { Card } from "@/components/ui/card";
-import { galleryItems } from "@/lib/data";
+import { listAllGalleryItems } from "@/lib/db/gallery";
 
-export default function AdminGaleriPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminGaleriPage() {
+  const items = await listAllGalleryItems();
+
   return (
     <div className="mx-auto max-w-container">
       <AdminPageHeader
         title="Galeri Publik"
-        description="Galeri publik memakai aset gambar yang tersimpan di project agar ringan dan konsisten."
+        description="Upload foto kegiatan koperasi dan kelola tampilan dokumentasi publik."
       />
       <Card className="mb-6">
-        <p className="text-on-surface-variant">
-          Upload gambar dinamis dibatasi untuk struktur kepengurusan, acara, dan berita. Galeri ini mengambil gambar dari folder public/images.
-        </p>
+        <GalleryUploadForm />
       </Card>
       <div className="grid gap-6 md:grid-cols-3">
-        {galleryItems.map((item) => (
-          <Card key={item.id} className="overflow-hidden p-0">
+        {items.map((item) => (
+          <Card key={`${item.id}-${item.imageUrl}`} className="overflow-hidden p-0">
             <img src={item.imageUrl} alt={item.title} className="h-52 w-full object-cover" />
             <div className="p-5">
-              <h2 className="font-bold text-primary">{item.title}</h2>
-              <p className="mt-2 text-sm text-muted-text">{item.category}</p>
+              <p className="text-xs font-bold uppercase text-secondary-container">{item.category}</p>
+              <h2 className="mt-2 font-bold text-primary">{item.title}</h2>
+              <p className="mt-2 line-clamp-2 text-sm text-muted-text">{item.description}</p>
             </div>
           </Card>
         ))}
