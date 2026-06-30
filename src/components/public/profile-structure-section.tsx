@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { UserRound } from "lucide-react";
+import { StructureAvatar } from "@/components/public/structure-avatar";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { listBoardMembers } from "@/lib/db/board-members";
 import { cn } from "@/lib/utils";
@@ -13,25 +13,7 @@ function PersonCard({ person, lead = false }: { person: BoardMember; lead?: bool
         lead ? "border-primary-container" : "border-border-subtle"
       )}
     >
-      {person.photoUrl ? (
-        <img
-          src={person.photoUrl}
-          alt={person.name}
-          className={cn(
-            "mx-auto h-11 w-11 rounded-full border-2 object-cover sm:h-16 sm:w-16",
-            lead ? "border-primary-container" : "border-secondary-container"
-          )}
-        />
-      ) : (
-        <div
-          className={cn(
-            "mx-auto flex h-11 w-11 items-center justify-center rounded-full text-white sm:h-16 sm:w-16",
-            lead ? "bg-primary-container" : "bg-secondary-container"
-          )}
-        >
-          <UserRound size={lead ? 34 : 30} strokeWidth={2.4} aria-hidden="true" />
-        </div>
-      )}
+      <StructureAvatar src={person.photoUrl} alt={person.name} lead={lead} />
       <h3 className="mt-1.5 break-words text-xs font-bold leading-tight text-primary sm:mt-3 sm:text-lg">{person.name}</h3>
       <p className="break-words text-[11px] font-bold leading-tight text-secondary sm:text-base">{person.position}</p>
       {person.period ? (
