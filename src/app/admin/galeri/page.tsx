@@ -16,10 +16,10 @@ export default async function AdminGaleriPage() {
         title="Galeri Publik"
         description="Upload foto kegiatan koperasi dan kelola tampilan dokumentasi publik."
       />
-      <Card className="mb-6">
+      <Card className="mb-6 overflow-hidden p-4 sm:p-6">
         <GalleryUploadForm />
       </Card>
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid min-w-0 gap-6 md:grid-cols-3">
         {items.map((item) => (
           <Card key={`${item.id}-${item.imageUrl}`} className="overflow-hidden p-0">
             <img src={item.imageUrl} alt={item.title} className="h-52 w-full object-cover" />

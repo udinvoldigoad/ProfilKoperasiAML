@@ -68,58 +68,70 @@ export function GalleryUploadForm() {
   }
 
   return (
-    <form className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]" onSubmit={handleSubmit}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-bold text-primary md:col-span-2">
+    <form className="grid w-full min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]" onSubmit={handleSubmit}>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-primary md:col-span-2">
           Judul Foto
           <input
-            className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
+            className="min-h-12 w-full min-w-0 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
             placeholder="Kegiatan koperasi"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
           />
         </label>
-        <label className="grid gap-2 text-sm font-bold text-primary">
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-primary">
           Kategori
           <input
-            className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
+            className="min-h-12 w-full min-w-0 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
             placeholder="Kegiatan / Prestasi / Pertanian"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
             required
           />
         </label>
-        <label className="grid gap-2 text-sm font-bold text-primary">
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-primary">
           Tanggal
           <input
             type="date"
-            className="min-h-12 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
+            className="min-h-12 w-full min-w-0 rounded-lg border border-border-subtle px-4 font-normal text-on-surface"
             value={eventDate}
             onChange={(event) => setEventDate(event.target.value)}
           />
         </label>
-        <label className="grid gap-2 text-sm font-bold text-primary md:col-span-2">
+        <label className="grid min-w-0 gap-2 text-sm font-bold text-primary md:col-span-2">
           Deskripsi
           <textarea
-            className="min-h-28 rounded-lg border border-border-subtle px-4 py-3 font-normal text-on-surface"
+            className="min-h-28 w-full min-w-0 resize-y rounded-lg border border-border-subtle px-4 py-3 font-normal text-on-surface"
             placeholder="Keterangan singkat foto"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
         </label>
-        <label className="grid gap-2 text-sm font-bold text-primary md:col-span-2">
-          File Gambar
-          <input
-            ref={fileInputRef}
-            name="file"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="min-h-12 rounded-lg border border-border-subtle bg-white px-4 py-3 font-normal text-on-surface file:mr-4 file:rounded-md file:border-0 file:bg-primary-container file:px-3 file:py-2 file:text-sm file:font-bold file:text-white"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            required
-          />
-        </label>
+        <div className="grid min-w-0 gap-2 text-sm font-bold text-primary md:col-span-2">
+          <span>File Gambar</span>
+          <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-border-subtle bg-white p-3 sm:flex-row sm:items-center">
+            <input
+              ref={fileInputRef}
+              id="gallery-file-input"
+              name="file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              required
+            />
+            <label
+              htmlFor="gallery-file-input"
+              className="inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary-container px-4 text-xs font-bold text-white transition hover:bg-teal-dark"
+            >
+              Pilih File
+            </label>
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-muted-text">
+              {file ? file.name : "Belum ada file dipilih"}
+            </span>
+          </div>
+        </div>
         {error ? (
           <p className="rounded-lg bg-error/10 px-4 py-3 text-sm font-bold text-error md:col-span-2" role="alert">
             {error}
@@ -137,7 +149,7 @@ export function GalleryUploadForm() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border-subtle bg-surface-gray">
+      <div className="min-w-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface-gray">
         {previewUrl ? (
           <img src={previewUrl} alt="Preview foto galeri" className="aspect-[4/3] h-full w-full object-cover" />
         ) : (
