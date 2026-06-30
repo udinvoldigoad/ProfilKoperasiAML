@@ -210,7 +210,7 @@ export function QrScanner({ initialToken, viewer = "anggota" }: { initialToken?:
           <DetailRow icon={QrCode} label="Metode" value={result?.method ?? "QR Code"} />
         </div>
 
-        <div className="grid gap-3 border-t border-border-subtle bg-surface-container-low p-5 sm:grid-cols-2 sm:p-6">
+        <div className={`grid gap-3 border-t border-border-subtle bg-surface-container-low p-5 sm:p-6 ${isGuest ? "" : "sm:grid-cols-2"}`}>
           <Link
             href={isGuest ? "/" : "/anggota/riwayat-kehadiran"}
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-primary-container px-4 text-sm font-bold text-white"
@@ -218,12 +218,14 @@ export function QrScanner({ initialToken, viewer = "anggota" }: { initialToken?:
             {isGuest ? "Selesai" : "Lihat Riwayat"}
             <ArrowRight size={18} aria-hidden="true" />
           </Link>
-          <Link
-            href={isGuest ? "/tamu/login?next=%2Fpresensi%2Fscan" : "/anggota/dashboard"}
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
-          >
-            {isGuest ? "Ganti Tamu" : "Kembali ke Dashboard"}
-          </Link>
+          {!isGuest ? (
+            <Link
+              href="/anggota/dashboard"
+              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-primary-container bg-white px-4 text-sm font-bold text-primary"
+            >
+              Kembali ke Dashboard
+            </Link>
+          ) : null}
         </div>
       </section>
     );
