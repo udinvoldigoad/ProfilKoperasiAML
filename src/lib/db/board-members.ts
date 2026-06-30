@@ -1,5 +1,8 @@
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 import { boardMembers as fallbackBoardMembers } from "@/lib/data";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
+import { profilePhotoFilenameFromUrl, profilePhotoUploadDirectory } from "@/lib/profile-photo-storage";
 import type { BoardMember } from "@/types";
 
 function normalizeBoardName(value: string) {
@@ -31,21 +34,42 @@ function mapBoardMemberRow(row: BoardMemberRow): BoardMember {
   };
 }
 
+async function validBoardPhotoUrl(photoUrl?: string | null) {
+  if (!photoUrl) return "";
+
+  const filename = profilePhotoFilenameFromUrl(photoUrl);
+  if (!filename) return photoUrl;
+
+  try {
+    const info = await stat(join(profilePhotoUploadDirectory(), filename));
+    return info.isFile() ? photoUrl : "";
+  } catch {
+    return "";
+  }
+}
+
+async function withValidBoardPhoto(member: BoardMember): Promise<BoardMember> {
+  return {
+    ...member,
+    photoUrl: await validBoardPhotoUrl(member.photoUrl)
+  };
+}
+
 export async function listBoardMembers(): Promise<BoardMember[]> {
   if (!isDatabaseConfigured()) return fallbackBoardMembers;
 
   try {
     const rows = await prisma.boardMember.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
-    if (rows.length === 0) return fallbackBoardMembers;
+    if (rows.length === 0) return Promise.all(fallbackBoardMembers.map(withValidBoardPhoto));
 
     const rowsByName = new Map(rows.map((row) => [normalizeBoardName(row.name), row]));
     const defaultNames = new Set(fallbackBoardMembers.map((member) => normalizeBoardName(member.name)));
 
-    const mergedDefaults = fallbackBoardMembers.map((member) => {
+    const mergedDefaults = await Promise.all(fallbackBoardMembers.map(async (member) => {
       const row = rowsByName.get(normalizeBoardName(member.name));
-      if (!row) return member;
+      if (!row) return withValidBoardPhoto(member);
 
-      return {
+      return withValidBoardPhoto({
         ...member,
         id: row.id || member.id,
         name: row.name || member.name,
@@ -54,10 +78,12 @@ export async function listBoardMembers(): Promise<BoardMember[]> {
         contact: row.contact ?? member.contact,
         period: row.period ?? member.period,
         sortOrder: row.sortOrder ?? member.sortOrder
-      };
-    });
+      });
+    }));
 
-    const extraRows = rows.filter((row) => !defaultNames.has(normalizeBoardName(row.name))).map(mapBoardMemberRow);
+    const extraRows = await Promise.all(
+      rows.filter((row) => !defaultNames.has(normalizeBoardName(row.name))).map((row) => withValidBoardPhoto(mapBoardMemberRow(row)))
+    );
     return [...mergedDefaults, ...extraRows];
   } catch {
     return fallbackBoardMembers;
