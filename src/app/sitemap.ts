@@ -8,21 +8,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: baseUrl,
       lastModified: new Date(),
     },
-    {
-      url: `${baseUrl}/tentang`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/produk`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/galeri`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${baseUrl}/kontak`,
-      lastModified: new Date(),
-    },
   ];
 }
