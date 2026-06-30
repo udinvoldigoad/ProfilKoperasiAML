@@ -1,10 +1,28 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const staticRoutes = ["", "/struktur", "/unit", "/pengumuman", "/login", "/signup"];
-  return staticRoutes.map((route) => ({
-    url: `${siteUrl}${route}`,
-    lastModified: new Date()
-  }));
+  const baseUrl = "https://agromulyolestari.girimulyo.com";
+
+  return [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/tentang`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/produk`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/galeri`,
+      lastModified: new Date(),
+    },
+    {
+      url: `${baseUrl}/kontak`,
+      lastModified: new Date(),
+    },
+  ];
 }
