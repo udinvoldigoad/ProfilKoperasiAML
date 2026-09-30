@@ -23,15 +23,15 @@ async function readSeededAsset(relativePath: string) {
   if (!storagePath || !seedPath) return null;
 
   try {
-    return await readFile(storagePath);
+    return await readFile(/* turbopackIgnore: true */ storagePath);
   } catch {
     // Continue with seed fallback below.
   }
 
   try {
-    const seedInfo = await stat(seedPath);
+    const seedInfo = await stat(/* turbopackIgnore: true */ seedPath);
     if (!seedInfo.isFile()) return null;
-    const bytes = await readFile(seedPath);
+    const bytes = await readFile(/* turbopackIgnore: true */ seedPath);
     await mkdir(dirname(storagePath), { recursive: true });
     await copyFile(seedPath, storagePath).catch(() => undefined);
     return bytes;

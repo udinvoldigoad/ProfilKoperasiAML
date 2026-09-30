@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
 
   // Purge the cached profile so the footer and public pages reflect the change.
-  revalidateTag(SITE_PROFILE_TAG);
+  revalidateTag(SITE_PROFILE_TAG, "max");
 
   await logAudit({
     actorProfileId: session.profileId,
